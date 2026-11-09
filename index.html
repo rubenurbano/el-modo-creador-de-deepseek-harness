@@ -1,0 +1,3227 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>El Modo Creador de DeepSeek Harness — Tutorial Maestro V001</title>
+  <style>
+    :root {
+      --bg-main: #0a0e1a;
+      --bg-card: #0f172a;
+      --bg-elevated: #16223d;
+      --blue-highlight: #1e3a5f;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: #00d4ff;
+      --accent-secondary: #a855f7;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border-color: #1e3a5f;
+      --font-scale: 1;
+      --nav-height: 58px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    [data-theme="light"] {
+      --bg-main: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-elevated: #e2e8f0;
+      --blue-highlight: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0284c7;
+      --accent-glow: #0369a1;
+      --accent-secondary: #7e22ce;
+      --border-color: #cbd5e1;
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      font-size: calc(16px * var(--font-scale));
+      scroll-behavior: smooth;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-top: calc(var(--nav-height) + 48px);
+      padding-bottom: 90px;
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    /* BARRA DE PROGRESO SUPERIOR */
+    #reading-progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(30, 58, 95, 0.4);
+      z-index: 100;
+    }
+
+    #reading-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-secondary), var(--success));
+      transition: width 0.15s ease-out;
+    }
+
+    /* BARRA DE NAVEGACIÓN FIJA PRINCIPAL */
+    nav#main-nav {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      height: var(--nav-height);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      z-index: 40;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      scrollbar-width: thin;
+    }
+
+    nav#main-nav::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    nav#main-nav::-webkit-scrollbar-thumb {
+      background: var(--blue-highlight);
+      border-radius: 4px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .chip:hover, .chip:focus-visible {
+      border-color: var(--accent);
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .chip.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(168, 85, 247, 0.22));
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    #mb {
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: #38bdf8;
+      border: 1px solid #38bdf8;
+      font-weight: 700;
+    }
+
+    /* PANEL LATERAL ÍNDICE (#dr) */
+    #dr {
+      position: fixed;
+      top: 58px;
+      left: 0;
+      bottom: 0;
+      width: min(330px, 88vw);
+      background: #0f172a;
+      border-right: 1px solid #1e3a5f;
+      transform: translateX(-105%);
+      transition: .25s;
+      z-index: 45;
+      overflow: auto;
+      padding: 10px;
+      box-shadow: 8px 0 30px rgba(0, 0, 0, 0.65);
+    }
+
+    #dr.o {
+      transform: none;
+    }
+
+    #dr a {
+      display: block;
+      padding: 12px;
+      border-radius: 8px;
+      color: #e2e8f0;
+      cursor: pointer;
+      min-height: 44px;
+      font-weight: 500;
+      font-size: 0.92rem;
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #dr a:hover, #dr a:focus-visible {
+      background: #ffffff0d;
+      outline: 2px solid #00d4ff;
+    }
+
+    #dr a.on {
+      background: #00d4ff22;
+      color: #00d4ff;
+      border-color: rgba(0, 212, 255, 0.35);
+      font-weight: 700;
+    }
+
+    /* SUB-BARRA DE HERRAMIENTAS ACCESIBLE */
+    .utility-bar {
+      position: fixed;
+      top: calc(var(--nav-height) + 4px);
+      left: 0;
+      right: 0;
+      min-height: 44px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 10px;
+      z-index: 35;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 140px;
+      max-width: 420px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      min-height: 36px;
+      padding: 6px 32px 6px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    .search-input:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      display: none;
+    }
+
+    .utility-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tool-btn {
+      min-height: 36px;
+      min-width: 36px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .tool-btn:hover, .tool-btn:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* CONTENEDOR PRINCIPAL OPTIMIZADO PARA SAMSUNG GALAXY A02s (360px) */
+    main.container {
+      width: 100%;
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 14px 12px;
+    }
+
+    @media (min-width: 768px) {
+      main.container {
+        padding: 24px 24px;
+      }
+    }
+
+    /* SECCIONES / PESTAÑAS SPA */
+    .tab-section {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .tab-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TIPOGRAFÍA Y ENCABEZADOS */
+    h1 {
+      font-size: clamp(1.45rem, 4.5vw, 2.35rem);
+      line-height: 1.25;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .author-byline-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+      color: #0a0e1a;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    h2.section-title {
+      font-size: clamp(1.3rem, 3.8vw, 1.9rem);
+      color: var(--accent);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    h3 {
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
+      color: var(--text-primary);
+      margin: 20px 0 10px 0;
+      font-weight: 700;
+    }
+
+    h4 {
+      font-size: 1.02rem;
+      color: var(--accent);
+      margin: 14px 0 6px 0;
+      font-weight: 700;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      overflow-wrap: break-word;
+    }
+
+    ul, ol {
+      margin: 0 0 14px 20px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* TARJETAS Y COMPONENTES EDUCATIVOS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-highlight {
+      border-left: 4px solid var(--accent);
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.08), transparent);
+    }
+
+    .card-warning {
+      border-left: 4px solid var(--warning);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent);
+    }
+
+    .card-success {
+      border-left: 4px solid var(--success);
+      background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), transparent);
+    }
+
+    .card-danger {
+      border-left: 4px solid var(--danger);
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 680px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* METODOLOGÍA PEDAGÓGICA BADGES */
+    .pedagogy-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    /* CONTENEDOR SVG HERO Y CRÉDITOS (FORMATO 4:5 VERTICAL ADAPTABLE) */
+    .svg-hero-wrapper {
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 4 / 5;
+      margin: 0 auto 18px auto;
+      background: radial-gradient(circle at 50% 40%, #16223d 0%, #090d16 100%);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .svg-hero-mount {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .svg-hero-mount svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .svg-controls-bar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* ANIMACIONES CSS PARA EL SVG HERO MULTICAPA */
+    @keyframes orbitSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes orbitReverse {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+    @keyframes pulseCore {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    @keyframes floatCardA {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes floatCardB {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(7px); }
+    }
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -40; }
+    }
+    @keyframes radarSweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .svg-anim-orbit-slow {
+      transform-origin: 200px 250px;
+      animation: orbitSlow 26s linear infinite;
+    }
+    .svg-anim-orbit-rev {
+      transform-origin: 200px 250px;
+      animation: orbitReverse 18s linear infinite;
+    }
+    .svg-anim-core {
+      transform-origin: 200px 250px;
+      animation: pulseCore 3.2s ease-in-out infinite;
+    }
+    .svg-anim-float-a {
+      animation: floatCardA 4s ease-in-out infinite;
+    }
+    .svg-anim-float-b {
+      animation: floatCardB 4.6s ease-in-out infinite;
+    }
+    .svg-anim-dash {
+      stroke-dasharray: 6 6;
+      animation: dashFlow 1.6s linear infinite;
+    }
+    .svg-anim-radar {
+      transform-origin: 315px 380px;
+      animation: radarSweep 6s linear infinite;
+    }
+
+    .svg-paused * {
+      animation-play-state: paused !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .svg-anim-orbit-slow,
+      .svg-anim-orbit-rev,
+      .svg-anim-core,
+      .svg-anim-float-a,
+      .svg-anim-float-b,
+      .svg-anim-dash,
+      .svg-anim-radar {
+        animation: none !important;
+      }
+    }
+
+    /* BLOQUES COPIABLES Y PROMPTS */
+    .copy-block {
+      background: #060911;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin: 12px 0 16px 0;
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .copy-block {
+      background: #1e293b;
+      color: #f8fafc;
+    }
+
+    .copy-header {
+      background: rgba(30, 58, 95, 0.45);
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
+    .copy-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .copy-btn {
+      min-height: 36px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--accent);
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    .copy-btn.copied {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    pre.code-content {
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      margin: 0;
+    }
+
+    /* ENLACES URL CON BOTÓN "ABRIR ENLACE EN NUEVA VENTANA" */
+    .url-item-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .url-code-text {
+      font-family: ui-monospace, monospace;
+      font-size: 0.84rem;
+      color: var(--accent);
+      word-break: break-all;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    .url-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .open-url-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 42px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.84rem;
+      text-decoration: none;
+      border: 1px solid #38bdf8;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .open-url-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    /* TABLAS RESPONSIVAS PARA MÓVIL 360px */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin: 14px 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 310px;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* TARJETAS DESPLEGABLES (DETAILS / ACCORDION) */
+    details.collapsible-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    details.collapsible-card summary {
+      padding: 13px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      min-height: 48px;
+    }
+
+    details.collapsible-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.collapsible-card summary::after {
+      content: "＋";
+      color: var(--accent);
+      font-weight: 900;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    details.collapsible-card[open] summary::after {
+      content: "－";
+    }
+
+    .collapsible-body {
+      padding: 14px 15px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* LISTAS DE COMPROBACIÓN PERSISTENTES */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      margin-bottom: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      min-height: 44px;
+    }
+
+    .checklist-item:hover {
+      border-color: var(--accent);
+    }
+
+    .checklist-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 3px;
+      accent-color: var(--success);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .checklist-item.checked span {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    /* BOTONES DE NAVEGACIÓN FIJOS AL FINAL DE CADA PESTAÑA (ANTERIOR / PRÓXIMA) */
+    .tab-footer-nav {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .step-nav-btn {
+      min-height: 48px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--accent);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      justify-content: center;
+      min-width: 140px;
+      transition: all 0.2s;
+    }
+
+    .step-nav-btn.next-btn {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(168, 85, 247, 0.25));
+      color: var(--accent);
+    }
+
+    .step-nav-btn:hover {
+      background: var(--accent);
+      color: #0a0e1a;
+    }
+
+    /* BOTONES FLOTANTES MOVIBLES (DRAGGABLE) PARA INICIO Y ARRIBA */
+    .floating-draggable-btn {
+      position: fixed;
+      z-index: 60;
+      min-height: 46px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: #38bdf8;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+      font-weight: 800;
+      font-size: 0.8rem;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .floating-draggable-btn:active {
+      cursor: grabbing;
+      transform: scale(1.04);
+    }
+
+    #float-home-btn {
+      bottom: 74px;
+      right: 12px;
+    }
+
+    #float-top-btn {
+      bottom: 20px;
+      right: 12px;
+    }
+
+    /* FILTROS PARA 33 PREGUNTAS Y PROMPTS */
+    .filter-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-pill {
+      min-height: 40px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .filter-pill.active {
+      background: var(--accent);
+      color: #0a0e1a;
+      border-color: var(--accent);
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .level-1 { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+    .level-2 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+    .level-3 { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid #a855f7; }
+
+    /* ESTILOS ESPECIALES CRÉDITOS */
+    .credits-author-box {
+      text-align: center;
+      padding: 22px 16px;
+      background: linear-gradient(145deg, rgba(30, 58, 95, 0.45), rgba(15, 23, 42, 0.9));
+      border: 2px solid var(--accent);
+      border-radius: var(--radius-lg);
+      margin: 18px 0;
+    }
+
+    .credits-author-name {
+      font-size: clamp(1.9rem, 6vw, 3rem);
+      font-weight: 900;
+      background: linear-gradient(90deg, #38bdf8, #a855f7, #22c55e);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .credits-author-role {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    /* RESULTADOS DEL BUSCADOR GLOBAL */
+    #search-results-banner {
+      display: none;
+      background: var(--bg-elevated);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    /* HOJA DE ESTILOS DE IMPRESIÓN Y PDF A4 */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 14mm 12mm;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 11pt !important;
+      }
+
+      nav#main-nav,
+      #dr,
+      .utility-bar,
+      #reading-progress-container,
+      .floating-draggable-btn,
+      .tab-footer-nav,
+      .svg-controls-bar,
+      .copy-btn,
+      #search-results-banner {
+        display: none !important;
+      }
+
+      .tab-section {
+        display: block !important;
+        opacity: 1 !important;
+        transform: none !important;
+        margin-bottom: 24px !important;
+        page-break-inside: auto;
+      }
+
+      .card, details.collapsible-card, .copy-block, .url-item-box {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 1px solid #64748b !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
+
+      h1, h2.section-title, h3, h4, p, li, td, th, .credits-author-name {
+        color: #000000 !important;
+        background: none !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+
+      pre.code-content, .url-code-text {
+        background: #f8fafc !important;
+        color: #000000 !important;
+        border: 1px solid #94a3b8 !important;
+        white-space: pre-wrap !important;
+      }
+
+      .svg-hero-wrapper {
+        max-width: 260px !important;
+        margin: 10px auto !important;
+        background: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE PROGRESO DE LECTURA -->
+  <div id="reading-progress-container" aria-hidden="true">
+    <div id="reading-progress-bar"></div>
+  </div>
+
+  <!-- PLANTILLA ÚNICA SVG OCULTA (SE EXTRAE Y ELIMINA DEL DOM AL INICIAR) -->
+  <div id="svg-master-source" style="display:none;" aria-hidden="true">
+    <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración animada del Modo Creador de DeepSeek Harness mostrando el motor Cordis, globo 3D Earth Live, conectores MCP y módulos de productividad">
+      <defs>
+        <linearGradient id="bgGrad__UID__" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#070b14"/>
+          <stop offset="50%" stop-color="#0f172a"/>
+          <stop offset="100%" stop-color="#171130"/>
+        </linearGradient>
+        <radialGradient id="coreGlow__UID__" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.95"/>
+          <stop offset="45%" stop-color="#38bdf8" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="panelGrad__UID__" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1e293b" stop-opacity="0.92"/>
+          <stop offset="100%" stop-color="#0f172a" stop-opacity="0.96"/>
+        </linearGradient>
+        <linearGradient id="beamGrad__UID__" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="50%" stop-color="#a855f7"/>
+          <stop offset="100%" stop-color="#22c55e"/>
+        </linearGradient>
+        <filter id="neonGlow__UID__" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Fondo espacial tecnológico 4:5 -->
+      <rect width="400" height="500" fill="url(#bgGrad__UID__)"/>
+
+      <!-- Rejilla de arquitectura desbloqueada -->
+      <g stroke="#1e3a5f" stroke-width="0.7" opacity="0.45">
+        <line x1="0" y1="60" x2="400" y2="60"/>
+        <line x1="0" y1="120" x2="400" y2="120"/>
+        <line x1="0" y1="180" x2="400" y2="180"/>
+        <line x1="0" y1="250" x2="400" y2="250"/>
+        <line x1="0" y1="320" x2="400" y2="320"/>
+        <line x1="0" y1="380" x2="400" y2="380"/>
+        <line x1="0" y1="440" x2="400" y2="440"/>
+        <line x1="65" y1="0" x2="65" y2="500"/>
+        <line x1="135" y1="0" x2="135" y2="500"/>
+        <line x1="200" y1="0" x2="200" y2="500"/>
+        <line x1="265" y1="0" x2="265" y2="500"/>
+        <line x1="335" y1="0" x2="335" y2="500"/>
+      </g>
+
+      <!-- Cabecera de ventana nativa DeepSeek Harness Creator Mode -->
+      <rect x="16" y="14" width="368" height="34" rx="8" fill="url(#panelGrad__UID__)" stroke="#38bdf8" stroke-width="1.2"/>
+      <circle cx="32" cy="31" r="4.5" fill="#ef4444"/>
+      <circle cx="46" cy="31" r="4.5" fill="#f59e0b"/>
+      <circle cx="60" cy="31" r="4.5" fill="#22c55e"/>
+      <text x="78" y="35" fill="#e2e8f0" font-family="monospace" font-size="10.5" font-weight="bold">DEEPSEEK HARNESS</text>
+      <rect x="262" y="21" width="112" height="20" rx="10" fill="#00d4ff26" stroke="#00d4ff" stroke-width="1"/>
+      <text x="274" y="34" fill="#00d4ff" font-family="monospace" font-size="9.5" font-weight="bold">⚡ CREATOR MODE</text>
+
+      <!-- Órbitas de energía multicapa del motor Cordis -->
+      <g class="svg-anim-orbit-slow">
+        <circle cx="200" cy="250" r="126" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="10 8" opacity="0.55"/>
+        <circle cx="200" cy="124" r="5" fill="#00d4ff" filter="url(#neonGlow__UID__)"/>
+        <circle cx="200" cy="376" r="5" fill="#a855f7" filter="url(#neonGlow__UID__)"/>
+        <circle cx="74" cy="250" r="4" fill="#22c55e"/>
+        <circle cx="326" cy="250" r="4" fill="#f59e0b"/>
+      </g>
+
+      <g class="svg-anim-orbit-rev">
+        <circle cx="200" cy="250" r="92" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4 10" opacity="0.7"/>
+        <polygon points="200,152 205,162 195,162" fill="#38bdf8"/>
+        <polygon points="200,348 205,338 195,338" fill="#22c55e"/>
+      </g>
+
+      <!-- Líneas de flujo de datos hacia los plugins -->
+      <path d="M 200 250 L 82 115" stroke="url(#beamGrad__UID__)" stroke-width="2" class="svg-anim-dash"/>
+      <path d="M 200 250 L 315 115" stroke="url(#beamGrad__UID__)" stroke-width="2" class="svg-anim-dash"/>
+      <path d="M 200 250 L 82 380" stroke="url(#beamGrad__UID__)" stroke-width="2" class="svg-anim-dash"/>
+      <path d="M 200 250 L 315 380" stroke="url(#beamGrad__UID__)" stroke-width="2" class="svg-anim-dash"/>
+
+      <!-- Núcleo Central: Cordis Engine + Plugin Manager -->
+      <g class="svg-anim-core">
+        <circle cx="200" cy="250" r="68" fill="url(#coreGlow__UID__)"/>
+        <polygon points="200,196 247,223 247,277 200,304 153,277 153,223" fill="#0f172a" stroke="#00d4ff" stroke-width="2.5" filter="url(#neonGlow__UID__)"/>
+        <polygon points="200,208 236,229 236,271 200,292 164,271 164,229" fill="#16223d" stroke="#a855f7" stroke-width="1.2"/>
+        <text x="200" y="246" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="12" font-weight="bold">CORDIS</text>
+        <text x="200" y="261" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9" font-weight="bold">PLUGIN CORE</text>
+      </g>
+
+      <!-- Módulo Superior Izquierdo: Mi Espacio Kanban & Estudio Creativo -->
+      <g class="svg-anim-float-a">
+        <rect x="20" y="72" width="124" height="76" rx="8" fill="url(#panelGrad__UID__)" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="30" y="89" fill="#38bdf8" font-family="monospace" font-size="9.5" font-weight="bold">📋 KANBAN / 16:9</text>
+        <rect x="30" y="96" width="30" height="40" rx="3" fill="#16223d" stroke="#38bdf8" stroke-width="0.8"/>
+        <rect x="66" y="96" width="30" height="40" rx="3" fill="#16223d" stroke="#a855f7" stroke-width="0.8"/>
+        <rect x="102" y="96" width="30" height="40" rx="3" fill="#16223d" stroke="#22c55e" stroke-width="0.8"/>
+        <rect x="34" y="102" width="22" height="6" rx="1.5" fill="#38bdf8"/>
+        <rect x="70" y="110" width="22" height="6" rx="1.5" fill="#a855f7"/>
+        <rect x="106" y="118" width="22" height="6" rx="1.5" fill="#22c55e"/>
+      </g>
+
+      <!-- Módulo Superior Derecho: Task Celebration HUD + AI Usage Monitor -->
+      <g class="svg-anim-float-b">
+        <rect x="254" y="72" width="126" height="76" rx="8" fill="url(#panelGrad__UID__)" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="264" y="89" fill="#22c55e" font-family="monospace" font-size="9.5" font-weight="bold">⏱ HUD &amp; TOKENS</text>
+        <text x="266" y="114" fill="#ffffff" font-family="monospace" font-size="16" font-weight="bold">04:12</text>
+        <circle cx="352" cy="108" r="10" fill="#22c55e33" stroke="#22c55e" stroke-width="1.5"/>
+        <path d="M 347 108 L 351 112 L 358 104" fill="none" stroke="#22c55e" stroke-width="2"/>
+        <!-- Barra de presión de contexto -->
+        <rect x="264" y="126" width="104" height="8" rx="4" fill="#090d16" stroke="#1e3a5f"/>
+        <rect x="264" y="126" width="66" height="8" rx="4" fill="url(#beamGrad__UID__)"/>
+      </g>
+
+      <!-- Módulo Inferior Izquierdo: MiniCut MP4 + DeepWiki MCP -->
+      <g class="svg-anim-float-b">
+        <rect x="20" y="340" width="130" height="82" rx="8" fill="url(#panelGrad__UID__)" stroke="#a855f7" stroke-width="1.5"/>
+        <text x="30" y="357" fill="#c084fc" font-family="monospace" font-size="9.5" font-weight="bold">🎬 MINICUT &amp; MCP</text>
+        <rect x="30" y="365" width="110" height="14" rx="3" fill="#16223d" stroke="#38bdf8" stroke-width="0.8"/>
+        <rect x="36" y="368" width="42" height="8" rx="2" fill="#38bdf8"/>
+        <rect x="82" y="368" width="46" height="8" rx="2" fill="#a855f7"/>
+        <text x="30" y="395" fill="#94a3b8" font-family="monospace" font-size="8.5">Streamable HTTP</text>
+        <text x="30" y="409" fill="#00d4ff" font-family="monospace" font-size="8.5">mcp.deepwiki.com</text>
+      </g>
+
+      <!-- Módulo Inferior Derecho: Earth Live 3D Globe (USGS + NASA EONET) -->
+      <g class="svg-anim-float-a">
+        <rect x="250" y="340" width="130" height="82" rx="8" fill="url(#panelGrad__UID__)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="260" y="356" fill="#00d4ff" font-family="monospace" font-size="9" font-weight="bold">🌍 EARTH LIVE 3D</text>
+        <circle cx="315" cy="386" r="24" fill="#091930" stroke="#38bdf8" stroke-width="1.5"/>
+        <ellipse cx="315" cy="386" rx="24" ry="9" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.7"/>
+        <ellipse cx="315" cy="386" rx="10" ry="24" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.7"/>
+        <circle cx="307" cy="378" r="3" fill="#ef4444" filter="url(#neonGlow__UID__)"/>
+        <circle cx="325" cy="392" r="2.8" fill="#f59e0b" filter="url(#neonGlow__UID__)"/>
+        <g class="svg-anim-radar">
+          <line x1="315" y1="386" x2="336" y2="375" stroke="#22c55e" stroke-width="1.5"/>
+        </g>
+      </g>
+
+      <!-- Barra Inferior de Comando Universal -->
+      <rect x="16" y="444" width="368" height="40" rx="8" fill="#060911" stroke="#38bdf8" stroke-width="1.3"/>
+      <text x="28" y="461" fill="#94a3b8" font-family="monospace" font-size="8.5">PREFIJO UNIVERSAL DSH:</text>
+      <text x="28" y="475" fill="#22c55e" font-family="monospace" font-size="9.5" font-weight="bold">&gt; Create a DSH plugin with a left sidebar entry.</text>
+    </svg>
+  </div>
+
+  <!-- BARRA SUPERIOR FIJA DE NAVEGACIÓN -->
+  <nav id="main-nav" aria-label="Navegación principal del tutorial">
+    <button class="chip" id="mb" aria-label="Abrir índice" aria-expanded="false">☰ Índice</button>
+    <button class="chip active" data-tab-index="0">INICIO</button>
+    <button class="chip" data-tab-index="1">CONCEPTOS</button>
+    <button class="chip" data-tab-index="2">PROCEDIMIENTO</button>
+    <button class="chip" data-tab-index="3">PRÁCTICA</button>
+    <button class="chip" data-tab-index="4">PROMPTS</button>
+    <button class="chip" data-tab-index="5">33 Preguntas (Q&amp;A)</button>
+    <button class="chip" data-tab-index="6">ERRORES</button>
+    <button class="chip" data-tab-index="7">RESUMEN</button>
+    <button class="chip" data-tab-index="8">FUENTES</button>
+    <button class="chip" data-tab-index="9">CRÉDITOS</button>
+  </nav>
+
+  <!-- PANEL LATERAL DEL ÍNDICE (#dr) -->
+  <div id="dr" role="navigation" aria-label="Índice completo de secciones"></div>
+
+  <!-- SUB-BARRA DE UTILIDADES (BUSCADOR, TAMAÑO DE LETRA, TEMA, IMPRESIÓN) -->
+  <div class="utility-bar" role="region" aria-label="Herramientas de lectura y búsqueda">
+    <div class="search-wrapper">
+      <input type="search" id="global-search-input" class="search-input" placeholder="Buscar término, plugin o prompt..." aria-label="Buscar en el tutorial">
+      <button type="button" id="search-clear-btn" class="search-clear-btn" aria-label="Limpiar búsqueda">✕</button>
+    </div>
+    <div class="utility-actions">
+      <button type="button" class="tool-btn" id="font-dec-btn" title="Reducir tamaño de letra" aria-label="Reducir tamaño de letra">A−</button>
+      <button type="button" class="tool-btn" id="font-inc-btn" title="Aumentar tamaño de letra" aria-label="Aumentar tamaño de letra">A+</button>
+      <button type="button" class="tool-btn" id="theme-toggle-btn" title="Cambiar entre tema oscuro y claro" aria-label="Cambiar tema">☀/🌙</button>
+      <button type="button" class="tool-btn" id="print-pdf-btn" title="Imprimir o Guardar como PDF A4" aria-label="Imprimir o guardar PDF">🖨 PDF</button>
+    </div>
+  </div>
+
+  <!-- BOTONES FLOTANTES MOVIBLES (DRAGGABLE) -->
+  <button type="button" id="float-home-btn" class="floating-draggable-btn" title="Arrastra para mover o pulsa para ir a INICIO" aria-label="Ir a la pestaña de Inicio">
+    🏠 INICIO
+  </button>
+  <button type="button" id="float-top-btn" class="floating-draggable-btn" title="Arrastra para mover o pulsa para subir al comienzo de la pestaña actual" aria-label="Volver al principio de la pestaña actual">
+    ⬆ ARRIBA
+  </button>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="container">
+
+    <!-- BANNER DE RESULTADOS DE BÚSQUEDA -->
+    <div id="search-results-banner" role="status" aria-live="polite"></div>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 0: INICIO (HOME)                                            -->
+    <!-- =================================================================== -->
+    <section class="tab-section active" id="sec-0" data-t="INICIO">
+      <div class="svg-hero-wrapper" role="img" aria-label="Ilustración vectorial animada del Modo Creador de DeepSeek Harness: arquitectura de plugins Cordis, visor terrestre 3D Earth Live, conectores MCP y widgets flotantes.">
+        <div id="svg-mount-home" class="svg-hero-mount"></div>
+      </div>
+
+      <div class="svg-controls-bar">
+        <button type="button" class="tool-btn" id="toggle-svg-anim-home">⏸ Pausar / Reanudar animación SVG</button>
+        <button type="button" class="chip" id="ix">☰ Ver índice</button>
+      </div>
+
+      <span class="pedagogy-pill">Manual Maestro Paso a Paso · Nivel Principiante a PRO</span>
+      <h1>El Modo Creador de DeepSeek Harness <span class="author-byline-badge">by Rubén Sbarsky</span></h1>
+
+      <div class="card card-highlight">
+        <p><strong>Bienvenido a la guía integral de aprendizaje autodidacta</strong> para dominar desde cero la instalación, configuración de modelos 100% gratuitos, creación de plugins interactivos en 2D y 3D, integraciones mediante el protocolo <strong>MCP (Model Context Protocol)</strong>, marca blanca (rebranding) y automatización de herramientas dentro de <strong>DeepSeek Harness Creator Mode</strong>.</p>
+        <p style="margin-bottom:0;">Este tutorial está redactado para que cualquier persona —incluso <strong>sin conocimientos técnicos ni experiencia previa en programación</strong>— pueda construir sus propias aplicaciones nativas dentro de DeepSeek Harness utilizando únicamente instrucciones en español.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>🎯 ¿Qué vas a lograr con este tutorial?</h3>
+          <ul>
+            <li>Instalar <strong>DeepSeek Harness</strong> en macOS o Windows cumpliendo los requisitos óptimos.</li>
+            <li>Conectar <strong>OpenRouter</strong> para utilizar modelos de IA potentes y <strong>100% gratuitos</strong> (etiqueta <code>free</code>) sin pagar suscripciones.</li>
+            <li>Dominar el flujo del botón <code>More → Crear un plugin</code> y el <strong>Prefijo Universal en inglés</strong>.</li>
+            <li>Construir <strong>11 plugins funcionales</strong> y ejecutar consultas técnicas reales mediante el conector <strong>DeepWiki MCP</strong>.</li>
+            <li>Personalizar el nombre, logotipo y estética retro pixel art de los años 90 de tu propio Harness.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>🧭 Estructura Pedagógica Progresiva</h3>
+          <p>Cada módulo de este manual aplica la secuencia didáctica completa:</p>
+          <p><strong>QUÉ ES → PARA QUÉ SIRVE → POR QUÉ IMPORTA → CÓMO SE HACE → EJEMPLO → PRÁCTICA → ERRORES → RESUMEN.</strong></p>
+          <p style="margin-bottom:0;">Además, cuentas con una pestaña exclusiva con todos los <strong>Prompts listos para copiar</strong> y una evaluación graduada con <strong>33 Preguntas y Respuestas (Nivel 1, Nivel 2 y Nivel 3)</strong>.</p>
+        </div>
+      </div>
+
+      <div class="card card-success">
+        <h3>🗺️ Mapa Rápido del Ecosistema (12 Prompts Oficiales)</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Plugins / Herramientas que construirás</th>
+                <th>Resultado Real</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Productividad y Control</strong></td>
+                <td>Task Celebration HUD, AI Usage Monitor, Mi Espacio (Kanban), Mission Control</td>
+                <td>Cronómetros con confeti, auditoría de tokens/USD, tableros Kanban conectados al chat y supervisión multisesión.</td>
+              </tr>
+              <tr>
+                <td><strong>Diseño y Multimedia</strong></td>
+                <td>Estudio Creativo (YouTube 16:9), MiniCut (Editor MP4), Retro AI OS</td>
+                <td>Exportación real de miniaturas PNG $1280 \times 720$, edición de vídeo con FFmpeg y tema visual de los años 90.</td>
+              </tr>
+              <tr>
+                <td><strong>3D y Datos en Vivo</strong></td>
+                <td>IA Generativa en 3D, Escape AI, Earth Live</td>
+                <td>Laboratorio didáctico de tokens/vectores, videojuego 3D WASD y globo terráqueo conectado a la NASA y USGS.</td>
+              </tr>
+              <tr>
+                <td><strong>Protocolo MCP</strong></td>
+                <td>Instalar DeepWiki MCP + Investigar con DeepWiki</td>
+                <td>Conexión Streamable HTTP a <code>https://mcp.deepwiki.com/mcp</code> e inspección del repositorio oficial.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn next-btn" onclick="go(1)">Ir a la próxima pestaña: CONCEPTOS ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 1: CONCEPTOS                                                -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-1" data-t="CONCEPTOS">
+      <h2 class="section-title">🧠 1. CONCEPTOS FUNDAMENTALES Y ARQUITECTURA</h2>
+
+      <div class="card card-highlight">
+        <span class="pedagogy-pill">QUÉ ES · PARA QUÉ SIRVE · POR QUÉ IMPORTA</span>
+        <h3>0.1. ¿Qué es DeepSeek Harness y qué es el Modo CREADOR?</h3>
+        <p><strong>¿Qué es?</strong> <strong>DeepSeek Harness</strong> es la aplicación de escritorio nativa desarrollada para ejecutar modelos de inteligencia artificial de manera local e interactiva en tu ordenador (macOS o Windows). A diferencia de una página web de chat convencional, un <em>"harness"</em> (arnés o contenedor de ejecución) es un entorno de software capaz de alojar herramientas, scripts, motores gráficos en 3D y módulos de programa integrados.</p>
+        <p><strong>¿Para qué sirve el Modo CREADOR (Creator Mode)?</strong> Es una función dentro de la aplicación de escritorio que desbloquea la capacidad de modificar la propia arquitectura de la interfaz. En lugar de limitarte a conversar con un modelo de texto, el Modo CREADOR te permite pedirle a la IA en lenguaje natural que programe, compile, instale y configure nuevos paneles laterales, editores de vídeo, monitores de gasto en dólares, videojuegos 3D y conectores de datos en tiempo real.</p>
+        <p style="margin-bottom:0;"><strong>¿Por qué importa?</strong> Porque elimina la barrera de saber programar: cualquier usuario puede crear software a medida que queda guardado de forma permanente (persistente) en la barra lateral de su ordenador.</p>
+      </div>
+
+      <div class="card">
+        <h3>0.2. Arquitectura Desbloqueada frente a Plataformas Cerradas</h3>
+        <p>Las plataformas comerciales cerradas (como las versiones web tradicionales de suscripción) imponen límites estrictos de mensajes, cuotas mensuales fijas y una interfaz rígida que el usuario no puede alterar. DeepSeek Harness opera bajo una <strong>arquitectura desbloqueada</strong>:</p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Característica</th>
+                <th>Plataformas Web Cerradas</th>
+                <th>DeepSeek Harness (Modo Creador)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Peajes y Suscripciones</strong></td>
+                <td>Cuota mensual obligatoria para funciones avanzadas.</td>
+                <td>Descarga gratuita y código abierto. Permite omitir recargas de saldo usando proveedores gratuitos.</td>
+              </tr>
+              <tr>
+                <td><strong>Elección de Modelos</strong></td>
+                <td>Restringido al proveedor propietario de la web.</td>
+                <td>Libertad total: API oficial de DeepSeek, cuentas de ChatGPT, modelos locales (Ollama) u OpenRouter con modelos 100% gratuitos (<code>free</code>).</td>
+              </tr>
+              <tr>
+                <td><strong>Interfaz de Usuario</strong></td>
+                <td>Estática e inmodificable por el usuario.</td>
+                <td>Extensible mediante el framework interno <strong>Cordis</strong> y el <strong>Plugin Manager</strong>.</td>
+              </tr>
+              <tr>
+                <td><strong>Persistencia</strong></td>
+                <td>Conversaciones aisladas en la nube.</td>
+                <td>Cada plugin generado se instala en el sistema operativo local y permanece activo al reiniciar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>0.3. Requisitos de Hardware y Sistema Operativo</h3>
+        <p>Antes de instalar DeepSeek Harness y ejecutar plugins con gráficos 3D o procesamiento de vídeo con FFmpeg, verifica que tu ordenador cumpla con estas especificaciones:</p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th>Requisito Mínimo (macOS)</th>
+                <th>Requisito Mínimo (Windows)</th>
+                <th>Recomendado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sistema Operativo</strong></td>
+                <td>macOS 12 (Monterey) o superior</td>
+                <td>Windows 10 (64-bit) o Windows 11</td>
+                <td>macOS Sonoma / Windows 11</td>
+              </tr>
+              <tr>
+                <td><strong>Procesador (CPU)</strong></td>
+                <td>Apple Silicon (M1/M2/M3/M4) o Intel Core i5</td>
+                <td>Intel Core i5 / AMD Ryzen 5</td>
+                <td>Apple M-Series o Intel i7 / Ryzen 7</td>
+              </tr>
+              <tr>
+                <td><strong>Memoria RAM</strong></td>
+                <td>8 GB</td>
+                <td>8 GB</td>
+                <td>16 GB o superior</td>
+              </tr>
+              <tr>
+                <td><strong>Almacenamiento Libre</strong></td>
+                <td>2 GB de espacio libre</td>
+                <td>2 GB de espacio libre</td>
+                <td>5 GB de espacio en disco SSD</td>
+              </tr>
+              <tr>
+                <td><strong>Tarjeta Gráfica (GPU)</strong></td>
+                <td>GPU integrada con soporte Metal</td>
+                <td>GPU compatible con DirectX 12 / OpenGL</td>
+                <td>GPU dedicada (NVIDIA / AMD / Apple GPU)</td>
+              </tr>
+              <tr>
+                <td><strong>Conexión a Internet</strong></td>
+                <td>Requerida para APIs y consultas MCP</td>
+                <td>Requerida para APIs y consultas MCP</td>
+                <td>Conexión de banda ancha estable</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>1.1. Anatomía de la Interfaz Nativa de DeepSeek Harness</h3>
+        <p>Al abrir la aplicación, encontrarás tres áreas de trabajo claramente diferenciadas:</p>
+        <ol>
+          <li><strong>Barra Lateral Izquierda (Left Sidebar):</strong> Contiene el botón de nuevo chat, el historial de sesiones y la sección de <strong>Plugins Instalados</strong>, donde aparecerán las entradas creadas en Modo Creador.</li>
+          <li><strong>Área Central de Conversación:</strong> Espacio donde redactas tus prompts, abres el menú <code>+ More → Crear un plugin</code> y supervisas el código que el agente compila.</li>
+          <li><strong>Barra Superior de Ajustes y Modos:</strong> Incluye el selector de modelo (ej. GPT-6.1 Sol, DeepSeek R1, Llama 3.3), el conmutador entre <code>Standard Mode</code> y <code>Creator Mode</code>, y la rueda dentada de configuración.</li>
+        </ol>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Esquema Visual de la Interfaz de DeepSeek Harness</span>
+          </div>
+          <pre class="code-content">+-----------------------------------------------------------------------+
+|  DeepSeek Harness                 [Modelo: GPT-6.1 Sol] [Modo: Creator]|
++-----------------------+-----------------------------------------------+
+| BARRA LATERAL         | ÁREA CENTRAL DE CONVERSACIÓN                  |
+|                       |                                               |
+|  + Nuevo Chat         |  Agente: Hola, ¿qué plugin deseas crear hoy?  |
+|                       |                                               |
+|  PLUGINS INSTALADOS:  |  -------------------------------------------  |
+|  - Estudio Creativo   |  [ Campo de entrada de texto / Prompt ]       |
+|  - Mi Espacio         |                                               |
+|  - Earth Live         |  [+] More  --&gt;  [Crear un plugin]  [Enviar]   |
++-----------------------+-----------------------------------------------+</pre>
+        </div>
+      </div>
+
+      <div class="card card-warning">
+        <h3>1.4. El Prefijo Universal en Inglés: Regla de Oro</h3>
+        <p>Para que cualquier plugin que solicites genere un acceso directo permanente en la barra lateral izquierda de la aplicación, <strong>debes anteponer siempre esta frase exacta en inglés</strong> al comienzo de tu prompt:</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prefijo Universal Obligatorio (Prompts 01 al 07 y 09 al 12)</span>
+            <button type="button" class="copy-btn" data-copy-target="prefix-core-concept">COPIAR</button>
+          </div>
+          <pre class="code-content" id="prefix-core-concept">Create a DSH plugin with a left sidebar entry.</pre>
+        </div>
+        <p style="margin-bottom:0;"><strong>¿Existe alguna excepción?</strong> Sí: únicamente el <strong>Prompt 08 (Investigar con DeepWiki)</strong> no lleva este prefijo, porque no construye un nuevo panel visual en la barra lateral, sino que realiza una consulta directa de investigación al conector MCP previamente instalado con el Prompt 11.</p>
+      </div>
+
+      <div class="card">
+        <h3>📖 Glosario Técnico Completo para Principiantes</h3>
+        <p>Pulsa sobre cada bloque o léelos en orden para dominar el vocabulario técnico empleado en todo el tutorial:</p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Término</th>
+                <th>Explicación Clara y Sencilla</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>API (Application Programming Interface)</strong></td>
+                <td>Interfaz de programación que permite que dos programas se comuniquen entre sí automáticamente (por ejemplo, DeepSeek Harness pidiendo datos sísmicos al servidor de la USGS).</td>
+              </tr>
+              <tr>
+                <td><strong>API Key (Clave API)</strong></td>
+                <td>Contraseña secreta alfanumérica (ej. <code>sk-or-v1-...</code>) que identifica tu cuenta al conectarte a un proveedor de modelos como OpenRouter o DeepSeek.</td>
+              </tr>
+              <tr>
+                <td><strong>Cordis</strong></td>
+                <td>Sistema y framework interno de plugins utilizado por DeepSeek Harness para inyectar código, escuchar eventos de sesión y montar componentes visuales flotantes como <code>shell.overlay</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>Creator Mode (Modo CREADOR)</strong></td>
+                <td>Estado de ejecución de DeepSeek Harness que habilita permisos para escribir código, usar el Plugin Manager e instalar herramientas persistentes mediante lenguaje natural.</td>
+              </tr>
+              <tr>
+                <td><strong>FFmpeg</strong></td>
+                <td>Biblioteca y herramienta de software libre de línea de comandos utilizada para recortar, unir, procesar y exportar archivos reales de vídeo y audio (usada por el plugin MiniCut).</td>
+              </tr>
+              <tr>
+                <td><strong>Harness</strong></td>
+                <td>Contenedor o entorno de software de escritorio diseñado para alojar, ejecutar y coordinar modelos de IA junto con sus herramientas locales.</td>
+              </tr>
+              <tr>
+                <td><strong>MCP (Model Context Protocol)</strong></td>
+                <td>Protocolo estándar abierto que conecta modelos de IA con fuentes de datos externas, repositorios de código y servidores de herramientas de forma estructurada.</td>
+              </tr>
+              <tr>
+                <td><strong>OpenRouter</strong></td>
+                <td>Plataforma agregadora que unifica decenas de modelos de IA (muchos de ellos 100% gratuitos buscando <code>free</code>) bajo una única clave API.</td>
+              </tr>
+              <tr>
+                <td><strong>Plugin</strong></td>
+                <td>Módulo de software ejecutable que se instala dentro de DeepSeek Harness para ampliar sus funciones nativas.</td>
+              </tr>
+              <tr>
+                <td><strong>Prompt</strong></td>
+                <td>Instrucción o comando en texto que le entregas a la inteligencia artificial indicando qué deseas crear o consultar.</td>
+              </tr>
+              <tr>
+                <td><strong>Shader</strong></td>
+                <td>Programa que ejecuta cálculos matemáticos en la tarjeta gráfica (GPU) para generar fondos animados, luces, sombras y degradados dinámicos en tiempo real.</td>
+              </tr>
+              <tr>
+                <td><strong>Streamable HTTP</strong></td>
+                <td>Mecanismo moderno de transporte de datos en red que permite transmitir flujos de información continuos sobre HTTP (usado por el servidor DeepWiki MCP).</td>
+              </tr>
+              <tr>
+                <td><strong>Token</strong></td>
+                <td>Unidad mínima de texto que procesa un modelo de IA (equivale aproximadamente a tres cuartas partes de una palabra).</td>
+              </tr>
+              <tr>
+                <td><strong>USGS</strong></td>
+                <td>Servicio Geológico de los Estados Unidos (<em>United States Geological Survey</em>), proveedor público de datos de terremotos en tiempo real en formato GeoJSON.</td>
+              </tr>
+              <tr>
+                <td><strong>Ventana de Contexto (Context Window)</strong></td>
+                <td>Capacidad máxima de memoria (medida en tokens) que un modelo puede recordar y procesar simultáneamente dentro de una misma sesión.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(0)">⬅ Anterior: INICIO</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(2)">Próxima: PROCEDIMIENTO ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 2: PROCEDIMIENTO                                            -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-2" data-t="PROCEDIMIENTO">
+      <h2 class="section-title">🛠️ 2. PROCEDIMIENTO PASO A PASO: INSTALACIÓN, IA GRATIS Y PLUGINS</h2>
+
+      <p>Sigue cada procedimiento en orden. Cada paso contiene <strong>una sola acción principal</strong>, el <strong>motivo técnico</strong> de esa acción y el <strong>resultado esperado</strong> para que puedas verificar tu avance sin perderte.</p>
+
+      <!-- PROCEDIMIENTO 1: INSTALACIÓN -->
+      <div class="card card-highlight">
+        <span class="pedagogy-pill">Procedimiento 01 · Instalación del Entorno</span>
+        <h3>Descarga e Instalación de DeepSeek Harness en macOS y Windows</h3>
+        <p><strong>Objetivo:</strong> Instalar la aplicación de escritorio nativa de DeepSeek Harness en tu ordenador superando los avisos preventivos del sistema operativo.</p>
+
+        <h4>Opción A: Instalación paso a paso en macOS</h4>
+        <ol>
+          <li><strong>Accede a la web oficial de descarga de DeepSeek Harness:</strong> Esto garantiza obtener el instalador legítimo sin modificaciones de terceros.</li>
+          <li><strong>Descarga el archivo <code>.dmg</code> correspondiente a tu procesador (Apple Silicon M1-M4 o Intel):</strong> Elegir la arquitectura correcta evita errores de emulación y maximiza el rendimiento gráfico.</li>
+          <li><strong>Haz doble clic sobre el archivo <code>.dmg</code> descargado:</strong> Se montará la ventana virtual de instalación en el escritorio de macOS.</li>
+          <li><strong>Arrastra el icono de DeepSeek Harness hacia la carpeta Aplicaciones:</strong> Así el programa queda instalado de forma permanente en el disco local.</li>
+          <li><strong>Abre la aplicación desde Aplicaciones y autoriza su ejecución si aparece Apple Gatekeeper:</strong> Si macOS muestra un aviso de seguridad, entra en <em>Ajustes del Sistema → Privacidad y Seguridad</em> y pulsa en <code>Abrir de todos modos</code>.</li>
+        </ol>
+
+        <h4>Opción B: Instalación paso a paso en Windows (10 / 11 de 64 bits)</h4>
+        <ol>
+          <li><strong>Descarga el instalador ejecutable <code>.exe</code> oficial de DeepSeek Harness:</strong> Obtendrás el paquete autoinstalable para sistemas Windows de 64 bits.</li>
+          <li><strong>Haz doble clic sobre el archivo <code>.exe</code> descargado:</strong> Se iniciará el asistente de configuración del sistema.</li>
+          <li><strong>Si aparece Windows Defender SmartScreen, pulsa en <code>Más información</code> y luego en <code>Ejecutar de todos modos</code>:</strong> Esto autoriza la instalación de software de código abierto recién publicado.</li>
+          <li><strong>Marca la casilla "Crear acceso directo en el escritorio" y finaliza el asistente:</strong> Tendrás acceso inmediato al entorno de desarrollo.</li>
+        </ol>
+        <p style="margin-bottom:0;"><strong>✅ Resultado esperado:</strong> La ventana principal de DeepSeek Harness se abre limpia en tu pantalla mostrando la barra lateral izquierda y el cuadro central de conversación.</p>
+      </div>
+
+      <!-- PROCEDIMIENTO 2: OPENROUTER GRATIS -->
+      <div class="card card-success">
+        <span class="pedagogy-pill">Procedimiento 02 · Modelos 100% Gratuitos</span>
+        <h3>Conexión Paso a Paso con OpenRouter para Usar IA Gratis (Sin Pagar Créditos)</h3>
+        <p><strong>Objetivo:</strong> Configurar motores de inteligencia artificial gratuitos dentro de DeepSeek Harness para crear plugins sin gastar dinero en APIs de pago.</p>
+        <p><strong>Explicación sencilla:</strong> Al abrir DeepSeek Harness por primera vez, puede aparecer un aviso invitándote a recargar saldo para la API oficial de DeepSeek. <strong>No es obligatorio pagar.</strong> Puedes conectar una clave gratuita de OpenRouter, conectarte con credenciales/tokens de tu cuenta de ChatGPT o usar la API oficial de DeepSeek si ya tenías saldo.</p>
+
+        <h4>Fase 1: Obtener tu clave API gratuita en OpenRouter</h4>
+        <ol>
+          <li><strong>Abre tu navegador web y entra en la plataforma OpenRouter:</strong> Es el agregador oficial donde generaremos la llave de acceso sin coste.</li>
+          <li><strong>Crea una cuenta gratuita o inicia sesión con tu correo:</strong> Necesitas un perfil activo para administrar tus claves.</li>
+          <li><strong>Dirígete al menú <code>Keys</code> (Claves API) y pulsa el botón <code>Create Key</code>:</strong> Esto abrirá el formulario de creación de credenciales.</li>
+          <li><strong>Escribe un nombre identificativo (por ejemplo, <code>Harness-Free</code>) y fija el límite de gasto (Credit limit) en <code>$0.00</code>:</strong> Poner el límite en cero garantiza que jamás se te cobre nada por error.</li>
+          <li><strong>Haz clic en <code>Create</code> y copia la clave generada (comienza por <code>sk-or-v1-...</code>):</strong> Guárdala en el portapapeles porque solo se muestra completa una vez.</li>
+        </ol>
+
+        <h4>Fase 2: Vincular OpenRouter dentro de DeepSeek Harness</h4>
+        <ol>
+          <li><strong>Haz clic en el icono de rueda dentada de <code>Ajustes</code> (Settings) dentro de DeepSeek Harness:</strong> Se abrirá el panel de administración de la aplicación.</li>
+          <li><strong>Selecciona la pestaña <code>Modelos</code> (Models) o <code>Proveedores</code> (Providers) y pulsa <code>Añadir Proveedor</code>:</strong> Aquí se registran los motores de inteligencia artificial externos.</li>
+          <li><strong>Elige <code>OpenRouter</code> en la lista predefinida y pega tu clave <code>sk-or-v1-...</code> en el campo API Key:</strong> El arnés quedará autenticado contra el catálogo de modelos de OpenRouter.</li>
+          <li><strong>Pulsa en <code>Guardar</code> y abre el selector de modelos en la barra superior del chat:</strong> Verás la barra de búsqueda de modelos disponibles.</li>
+          <li><strong>Escribe la palabra <code>free</code> en el buscador de modelos:</strong> El sistema filtrará exclusivamente los modelos 100% gratuitos (como <code>deepseek/deepseek-r1:free</code>, <code>meta-llama/llama-3.3-70b-instruct:free</code> o <code>google/gemini-2.0-flash-lite-free</code>).</li>
+          <li><strong>Selecciona un modelo gratuito y ajusta el Nivel de Esfuerzo (Effort Level) en <code>Medio</code> o <code>Alto</code>:</strong> Para programar plugins complejos o entornos 3D, un esfuerzo Medio o Alto permite que la IA razone entre 5 y 15 minutos generando código robusto sin errores de sintaxis.</li>
+        </ol>
+
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Esquema de Configuración de OpenRouter en Harness</span>
+          </div>
+          <pre class="code-content">+-----------------------------------------------------------------------+
+|  CONFIGURACIÓN DE OPENROUTER EN HARNESS                               |
++-----------------------------------------------------------------------+
+|  Proveedor: OpenRouter                                                |
+|  API Key:   sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                  |
+|                                                                       |
+|  Búsqueda de Modelos: [ free                                        ] |
+|  -------------------------------------------------------------------  |
+|  Modelos Gratuitos Disponibles:                                       |
+|  [x] google/gemini-2.0-flash-lite-free                                |
+|  [x] meta-llama/llama-3.3-70b-instruct:free                           |
+|  [x] deepseek/deepseek-r1:free                                        |
++-----------------------------------------------------------------------+</pre>
+        </div>
+        <p style="margin-bottom:0;"><strong>✅ Resultado esperado:</strong> Puedes conversar y compilar plugins en Modo Creador a coste cero ($0.00 USD).</p>
+      </div>
+
+      <!-- PROCEDIMIENTO 3: ACTIVAR MODO CREADOR Y CREAR UN PLUGIN -->
+      <div class="card">
+        <span class="pedagogy-pill">Procedimiento 03 · El Flujo Maestro de Compilación</span>
+        <h3>Cómo Activar el Modo Creador y Compilar Cualquier Plugin</h3>
+        <ol>
+          <li><strong>Ubica el selector de modo en la barra superior de DeepSeek Harness (junto al nombre del modelo):</strong> Por defecto la aplicación arranca en <code>Standard Mode</code>.</li>
+          <li><strong>Cambia el selector de <code>Standard Mode</code> a <code>Creator Mode</code>:</strong> Esto habilita los permisos internos de escritura de código, acceso a Cordis y gestión del Plugin Manager.</li>
+          <li><strong>En la caja inferior donde escribes tus mensajes, haz clic en el botón <code>+</code> o <code>More</code>:</strong> Se desplegará el menú de acciones especiales del entorno.</li>
+          <li><strong>Haz clic en la opción <code>Crear un plugin</code> (Create Plugin):</strong> El sistema insertará una etiqueta de contexto indicando al agente que la próxima orden debe empaquetarse como un módulo instalable.</li>
+          <li><strong>Pega el prompt completo comenzando siempre por <code>Create a DSH plugin with a left sidebar entry.</code> y pulsa Enviar:</strong> El agente diseñará la arquitectura, escribirá el código, lo instalará y lo verificará automáticamente.</li>
+          <li><strong>Itera desde el chat si deseas cambios adicionales:</strong> Una vez que el plugin aparezca en la barra lateral izquierda, puedes escribir en el mismo chat órdenes como <em>"Cambia el fondo a violeta"</em> o <em>"Añade un filtro por fecha"</em> para que el agente recompile la mejora al instante.</li>
+        </ol>
+      </div>
+
+      <!-- PROCEDIMIENTO 4: DESGLOSE DETALLADO DE LOS 12 MÓDULOS Y PLUGINS -->
+      <div class="card">
+        <span class="pedagogy-pill">Procedimiento 04 · Guía Técnica de los 12 Desarrollos</span>
+        <h3>Especificaciones Paso a Paso de Todas las Herramientas del Tutorial</h3>
+        <p>Despliega o revisa cada uno de los bloques siguientes para comprender cómo funciona cada plugin por dentro, qué exige su arquitectura y cómo validar que se ha construido sin simulaciones falsas:</p>
+
+        <!-- MÓDULO 3: PRODUCTIVIDAD Y CONTROL -->
+        <details class="collapsible-card" open>
+          <summary>1. Task Celebration HUD (Cronómetro Gigante + Confeti Real)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Un widget flotante siempre visible construido sobre la superficie oficial <code>shell.overlay</code> de Cordis. Muestra un cronómetro gigante en formato <code>MM:SS</code> mientras la IA trabaja y lanza confeti durante 3 segundos junto a un check verde y sonido opcional cuando la tarea concluye con éxito.</p>
+            <p><strong>Requisitos técnicos críticos:</strong></p>
+            <ul>
+              <li>Escucha los eventos reales de sesión: <code>session/event</code>, <code>turn/start</code> y <code>turn/end</code>.</li>
+              <li><strong>Regla de integridad:</strong> Solo lanza confeti cuando se cumple estrictamente <code>reason.kind === "completed"</code>. No celebra si la tarea se cancela, falla, queda bloqueada o se corta por límite de tokens.</li>
+              <li>Muestra 6 estados claros: <code>Trabajando</code>, <code>Usando herramientas</code>, <code>Esperando permiso</code>, <code>Completado</code>, <code>Cancelado</code> y <code>Error</code>, además del historial de duración de las últimas 5 tareas.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>2. AI Usage Monitor (Auditoría Financiera de Tokens y Contexto)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Panel flotante minimizable que monitoriza en tiempo real el consumo de tokens (entrada, salida, caché y razonamiento), la presión sobre la ventana de contexto y el coste estimado en dólares (USD) por tarea, sesión e histórico.</p>
+            <div class="copy-block">
+              <div class="copy-header"><span class="copy-label">Esquema Visual de AI Usage Monitor</span></div>
+              <pre class="code-content">+-----------------------------------------------------------------------+
+|  AI USAGE MONITOR (Panel Flotante)                        [_] [X]     |
++-----------------------------------------------------------------------+
+|  Modelo Activo: GPT-6.1 Sol        Proveedor: OpenRouter              |
+|  Presión de Contexto: [██████████████░░░░░░░░] 42% (52,400 / 128,000)  |
+|                                                                       |
+|  CONSUMO DE TOKENS:                                                   |
+|  - Entrada: 12,450 tokens           - Salida: 3,210 tokens           |
+|  - Caché:   4,100 tokens            - Razonamiento: 1,800 tokens     |
+|                                                                       |
+|  COSTE ESTIMADO:                                                      |
+|  - Tarea Actual: $0.0042 USD        - Total Histórico: $0.1285 USD    |
++-----------------------------------------------------------------------+</pre>
+            </div>
+            <p><strong>Reglas de Oro de Datos Reales:</strong></p>
+            <ul>
+              <li>Consulta las proyecciones nativas <code>tokenUsage</code>, <code>contextPressure</code>, <code>contextWindow</code> y <code>projectedTokens</code>.</li>
+              <li><strong>No duplicar tokens de razonamiento:</strong> Verifica que no se sumen dos veces si el proveedor ya los incluye dentro de los tokens de salida.</li>
+              <li><strong>Honestidad de datos:</strong> Nunca confunde <em>cuota de cuenta</em> con <em>contexto restante</em>. Si un proveedor no ofrece API de saldo o tarifas verificables, muestra <code>"Cuota de cuenta: no disponible"</code> o <code>"Estimación incompleta"</code> en lugar de inventar números.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>3. Mi Espacio (Tablero Kanban con Control Bidireccional por Chat)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Aplicación persistente de productividad con tres columnas (<code>Ideas</code>, <code>En proceso</code> y <code>Completado</code>). Permite crear tarjetas con título, descripción, etiquetas de colores, fecha límite y listas de verificación (checklists), además de moverlas arrastrando y soltando (Drag &amp; Drop).</p>
+            <p><strong>Conexión real con el agente:</strong> El tablero expone herramientas internas para que puedas escribir en el chat <em>"Organiza mis ideas para el próximo vídeo"</em> o <em>"Marca como completada la investigación"</em> y el agente cree o mueva las tarjetas automáticamente en tiempo real.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>4. Mission Control (Centro de Mando Global Multisesión)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Dashboard ejecutivo para supervisar todas tus sesiones abiertas e inactivas de DeepSeek Harness al mismo tiempo. Cada sesión muestra su tarjeta con el modelo activo, cronómetro independiente, estado (<code>trabajando</code>, <code>esperando</code>, <code>completado</code>, <code>error</code> o <code>inactivo</code>), número de llamadas a herramientas y coste estimado. Al hacer clic en una tarjeta, navegas directamente a esa conversación.</p>
+          </div>
+        </details>
+
+        <!-- MÓDULO 4: HERRAMIENTAS CREATIVAS Y MULTIMEDIA -->
+        <details class="collapsible-card">
+          <summary>5. Estudio Creativo (Taller de Miniaturas YouTube 16:9 en PNG 1280×720)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Estudio de diseño gráfico en español para crear miniaturas de YouTube en formato <code>16:9</code>. Arranca con una composición de impacto con el texto <code>"LA IA LO CAMBIA TODO"</code>, fondos con shaders animados, degradados, paletas de un clic, subida de logos propios y edición desde el chat (ej. <em>"Cambia el fondo a violeta"</em>).</p>
+            <p><strong>Validación de exportación:</strong> Debe exportar un archivo <strong>PNG real de $1280 \times 720$ píxeles</strong> a tu disco duro.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>6. MiniCut (Editor de Vídeo Funcional MP4 con FFmpeg)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Editor de vídeo no lineal simplificado dentro de Harness. Su primera versión obligatoria permite: 1) Importar dos archivos <code>.mp4</code> locales, 2) Previsualizarlos, 3) Colocarlos en una línea de tiempo (timeline), 4) Recortar el principio (In) y final (Out) de cada clip, 5) Reordenarlos, y 6) Exportar un único archivo <code>.mp4</code> real y reproducible fuera de DeepSeek Harness.</p>
+            <p><strong>Gestión de FFmpeg:</strong> Si el entorno necesita la herramienta <code>FFmpeg</code>, el agente primero inspecciona el sistema y te pide autorización antes de instalarla. Una vez validado, permite ediciones por voz/texto en el chat como <em>"recorta los primeros tres segundos del segundo vídeo"</em>.</p>
+          </div>
+        </details>
+
+        <!-- MÓDULO 5: 3D Y DATOS EN TIEMPO REAL -->
+        <details class="collapsible-card">
+          <summary>7. IA Generativa en 3D (Laboratorio Didáctico Tridimensional)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Simulación interactiva en 3D que explica visualmente cómo procesa la información un modelo de lenguaje: desde la conversión del texto en <strong>tokens y vectores multidimensionales</strong>, pasando por las capas de <strong>mecanismos de atención</strong>, hasta el cálculo de <strong>probabilidades</strong> del siguiente token.</p>
+            <p><strong>Cuidado de diseño en macOS:</strong> El prompt exige mantener el título del panel y la barra de herramientas libres de los botones nativos de ventana de macOS (<em>Traffic Lights</em>: cerrar, minimizar, maximizar) para evitar superposiciones.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>8. Escape AI (Videojuego 3D Interactivo con Físicas y Colisiones)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Videojuego 3D en primera o tercera persona ambientado en un laboratorio futurista con estética <em>low-poly</em>. Incluye dos habitaciones conectadas, control con teclas <code>WASD</code> y ratón, obstáculos con colisiones reales, una llave recolectable (tecla de interacción), una puerta bloqueada que solo se abre con la llave, temporizador y pantalla de victoria.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>9. Earth Live (Globo Terráqueo 3D con APIs Oficiales de USGS y NASA EONET)</summary>
+          <div class="collapsible-body">
+            <p><strong>Qué es y para qué sirve:</strong> Centro de control espacial en 3D en la barra lateral que dibuja en las coordenadas geográficas exactas del planeta Tierra los desastres y eventos naturales en tiempo real.</p>
+            <ul>
+              <li><strong>Terremotos (últimas 24h - USGS GeoJSON):</strong> <code>https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson</code></li>
+              <li><strong>Eventos Naturales Activos (NASA EONET):</strong> <code>https://eonet.gsfc.nasa.gov/api/v3/events?status=open</code></li>
+            </ul>
+            <p>Permite girar y hacer zoom sobre el globo, filtrar por magnitud/categoría/fecha y abrir fichas con enlaces a la fuente oficial. Si una API falla, informa del error sin inventar datos de demostración.</p>
+          </div>
+        </details>
+
+        <!-- MÓDULO 6: PROTOCOLO MCP -->
+        <details class="collapsible-card">
+          <summary>10 y 11. Conector DeepWiki MCP e Investigación del Repositorio Oficial</summary>
+          <div class="collapsible-body">
+            <p><strong>Paso 1 (Prompt 11 - Instalar DeepWiki MCP):</strong> Registra en el perfil actual un conector MCP real llamado <code>deepwiki</code> apuntando al endpoint <code>https://mcp.deepwiki.com/mcp</code> mediante transporte <strong>Streamable HTTP</strong> (sin autenticación para repositorios públicos).</p>
+            <p><strong>Paso 2 (Prompt 08 - Investigar con DeepWiki):</strong> Una vez activo el servidor MCP, se envía este prompt directamente en el chat (sin el prefijo en inglés) para que el agente consulte exclusivamente con las herramientas de DeepWiki el repositorio oficial <code>deepseek-ai/deepseek-harness</code> y extraiga la documentación real sobre Cordis, <code>shell.overlay</code>, eventos de sesión y Plugin Manager.</p>
+          </div>
+        </details>
+
+        <!-- MÓDULO 7: PERSONALIZACIÓN Y REBRANDING -->
+        <details class="collapsible-card">
+          <summary>12. Retro AI OS y Marca Blanca (Rebranding de Nombre, Logo y Fuentes)</summary>
+          <div class="collapsible-body">
+            <p><strong>Retro AI OS (Prompt 09):</strong> Transforma visualmente DeepSeek Harness en un sistema operativo pixel art de los años 90 con ventanas clásicas, interruptor de encendido/apagado persistente y una mascota pixel art original que reacciona en vivo cuando el agente está trabajando, esperando aprobación o ha terminado.</p>
+            <p><strong>Rebranding / Marca Blanca (Nombre y Logotipo Propio):</strong></p>
+            <ol>
+              <li>Abre una sesión en <code>Creator Mode</code>.</li>
+              <li>Pídele en lenguaje natural: <em>"Cambia el nombre de la aplicación de DeepSeek Harness a [Tu Nombre] Harness, ajusta los colores/tamaños de fuente y reemplaza el icono por el logotipo que te adjunto"</em>.</li>
+              <li><strong>Paso Crítico de Reinicio:</strong> Cierra por completo la aplicación DeepSeek Harness y vuelve a abrirla para que el sistema operativo recargue los activos gráficos del título y el nuevo icono.</li>
+            </ol>
+          </div>
+        </details>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(1)">⬅ Anterior: CONCEPTOS</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(3)">Próxima: PRÁCTICA ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 3: PRÁCTICA                                                 -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-3" data-t="PRÁCTICA">
+      <h2 class="section-title">🧪 3. PRÁCTICA GUIADA, EJEMPLOS Y PROYECTOS INTEGRADORES</h2>
+
+      <div class="card card-highlight">
+        <span class="pedagogy-pill">Aprender Haciendo · Correcto vs Incorrecto</span>
+        <h3>8.3. Comparativa Práctica: Cómo Redactar Prompts Sin Ambigüedad en Modo Creador</h3>
+        <p>En el Modo Creador, la diferencia entre obtener una simple maqueta decorativa sin utilidad o una aplicación real y funcional radica en cómo estructuras el prompt. Analiza estos ejemplos reales:</p>
+        <div class="grid-2">
+          <div class="card card-danger" style="margin-bottom:0;">
+            <h4>❌ Ejemplo Incorrecto (Ambiguo e Incompleto)</h4>
+            <p><em>"Hazme un editor de vídeo bonito para recortar vídeos y ponlo en la aplicación."</em></p>
+            <ul>
+              <li><strong>Fallo 1:</strong> Omite el prefijo en inglés <code>Create a DSH plugin with a left sidebar entry.</code>, por lo que puede no aparecer en la barra lateral.</li>
+              <li><strong>Fallo 2:</strong> No especifica formatos (MP4) ni exige validar el archivo exportado fuera de Harness.</li>
+              <li><strong>Fallo 3:</strong> El modelo puede crear botones decorativos que simulen exportar sin procesar vídeo real con FFmpeg.</li>
+            </ul>
+          </div>
+
+          <div class="card card-success" style="margin-bottom:0;">
+            <h4>✅ Ejemplo Correcto (Estándar Profesional DSH)</h4>
+            <p><em>"Create a DSH plugin with a left sidebar entry. Crea un plugin persistente llamado MiniCut. Importa 2 MP4 locales, recorta inicio/fin en timeline, reordena y exporta un MP4 real validando duración y resolución fuera de Harness. Solicita permiso antes de instalar FFmpeg."</em></p>
+            <ul>
+              <li><strong>Acierto 1:</strong> Incluye el prefijo universal en inglés.</li>
+              <li><strong>Acierto 2:</strong> Prohíbe simulaciones y exige prueba de éxito verificable.</li>
+              <li><strong>Acierto 3:</strong> Gestiona dependencias del sistema (FFmpeg) con seguridad.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROYECTOS INTEGRADORES -->
+      <div class="grid-2">
+        <div class="card">
+          <span class="pedagogy-pill">Proyecto Integrador A</span>
+          <h3>🎬 Suite Unificada de Creación de Contenido</h3>
+          <p><strong>Objetivo:</strong> Transformar tu DeepSeek Harness en un estudio audiovisual completo sin pagar licencias externas.</p>
+          <ol>
+            <li>Instala <strong>Task Celebration HUD</strong> (Prompt 07) para medir los tiempos de compilación y renderizado.</li>
+            <li>Instala <strong>Mi Espacio</strong> (Prompt 02) y pídele en el chat: <em>"Crea 3 tarjetas en Ideas con guiones para mi canal de YouTube"</em>.</li>
+            <li>Instala <strong>Estudio Creativo</strong> (Prompt 01), diseña la portada con el título de tu tarjeta y exporta el archivo PNG real en $1280 \times 720$.</li>
+            <li>Instala <strong>MiniCut</strong> (Prompt 03), une tus dos clips MP4, recorta los silencios desde el chat y exporta el vídeo final.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <span class="pedagogy-pill">Proyecto Integrador B</span>
+          <h3>🛰️ Centro de Control Técnico y Auditoría MCP</h3>
+          <p><strong>Objetivo:</strong> Configurar un entorno de ingeniería para auditar costes de IA e investigar código oficial en vivo.</p>
+          <ol>
+            <li>Instala el conector <strong>DeepWiki MCP</strong> (Prompt 11) verificando el transporte Streamable HTTP.</li>
+            <li>Ejecuta la consulta de investigación (Prompt 08) sobre <code>deepseek-ai/deepseek-harness</code> para obtener las referencias exactas de <code>tokenUsage</code> y <code>session/event</code>.</li>
+            <li>Instala <strong>AI Usage Monitor</strong> (Prompt 06) y comprueba la barra de presión de contexto cambiando entre dos modelos distintos.</li>
+            <li>Instala <strong>Mission Control</strong> (Prompt 05) y abre dos sesiones simultáneas para supervisar sus estados en tiempo real.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- EJERCICIOS PRÁCTICOS CON SOLUCIÓN EXPLICADA -->
+      <div class="card">
+        <h3>📝 Ejercicios Prácticos Autoevaluables (Con Solución Explicada)</h3>
+        <p>Intenta resolver mentalmente cada caso práctico antes de desplegar la solución oficial:</p>
+
+        <details class="collapsible-card">
+          <summary>Ejercicio 1: Quieres crear el plugin "Estudio Creativo", pero al terminar la compilación no aparece ningún icono en la barra lateral izquierda. ¿Qué ha fallado y cómo lo corriges?</summary>
+          <div class="collapsible-body">
+            <p><strong>Solución explicada:</strong> Olvidaste activar el botón <code>More → Crear un plugin</code> o no incluiste al principio del prompt el prefijo universal en inglés: <code>Create a DSH plugin with a left sidebar entry.</code> Para corregirlo sin perder el trabajo, escribe en esa misma sesión de chat: <em>"Registra e instala este plugin con una entrada permanente en la barra lateral izquierda (left sidebar entry) usando Plugin Manager"</em> o vuelve a lanzar el prompt con el prefijo completo.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>Ejercicio 2: Estás en un ordenador Mac (macOS) probando el laboratorio "IA Generativa en 3D", pero los botones de cerrar, minimizar y maximizar ventana tapan el título del juego. ¿Qué instrucción debes darle al agente?</summary>
+          <div class="collapsible-body">
+            <p><strong>Solución explicada:</strong> En macOS, los controles nativos de la ventana (conocidos como <em>Traffic Lights</em>) se ubican en la esquina superior izquierda. Debes indicarle al agente en el chat: <em>"Mantén el título del panel y la barra de herramientas libres de los botones nativos de la ventana de macOS añadiendo un margen superior o izquierdo suficiente para que no se superpongan"</em>.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card">
+          <summary>Ejercicio 3: Quieres investigar la documentación interna de DeepSeek Harness usando el Prompt 08, pero el agente te responde que no tiene acceso a las herramientas de DeepWiki. ¿Cuál es el orden correcto de actuación?</summary>
+          <div class="collapsible-body">
+            <p><strong>Solución explicada:</strong> El Prompt 08 es una consulta que depende de que el servidor MCP ya esté instalado. Primero debes ejecutar el <strong>Prompt 11 (Instalar DeepWiki MCP)</strong> con el endpoint <code>https://mcp.deepwiki.com/mcp</code> en Modo Creador, verificar que sus herramientas están activas, y solo entonces enviar el <strong>Prompt 08</strong>.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- CHECKLIST INTERACTIVA PERSISTENTE -->
+      <div class="card card-success">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <h3 style="margin:0;">✅ Lista de Comprobación de Tu Progreso Práctico</h3>
+          <button type="button" class="tool-btn" id="reset-checklist-btn">Reiniciar progreso</button>
+        </div>
+        <p>Marca cada hito a medida que lo completes en tu ordenador. Tu progreso se guarda automáticamente en este navegador (<code>localStorage</code>):</p>
+
+        <div id="interactive-checklist">
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-1"> <span>1. He descargado e instalado DeepSeek Harness en mi sistema operativo (macOS o Windows).</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-2"> <span>2. He creado una clave API en OpenRouter y he filtrado los modelos gratuitos con la palabra <code>free</code>.</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-3"> <span>3. He conmutado la interfaz de <code>Standard Mode</code> a <code>Creator Mode</code> y localizado el botón <code>More → Crear un plugin</code>.</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-4"> <span>4. He instalado mi primer plugin de control (<strong>Task Celebration HUD</strong> o <strong>AI Usage Monitor</strong>) usando el prefijo universal en inglés.</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-5"> <span>5. He creado el tablero Kanban <strong>Mi Espacio</strong> y he probado a crear o completar una tarea hablándole desde el chat.</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-6"> <span>6. He exportado una miniatura PNG real de $1280 \times 720$ píxeles con <strong>Estudio Creativo</strong> o un vídeo MP4 real con <strong>MiniCut</strong>.</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-7"> <span>7. He probado una experiencia 3D (<strong>IA Generativa en 3D</strong>, <strong>Escape AI</strong> o el globo en vivo <strong>Earth Live</strong>).</span></label>
+          <label class="checklist-item"><input type="checkbox" data-check-id="chk-8"> <span>8. He conectado el servidor <strong>DeepWiki MCP</strong> (Prompt 11) y realizado una consulta técnica con el Prompt 08.</span></label>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(2)">⬅ Anterior: PROCEDIMIENTO</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(4)">Próxima: PROMPTS ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 4: PROMPTS (CATÁLOGO COMPLETO CON CONTEXTO DE EMPLEO)       -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-4" data-t="PROMPTS">
+      <h2 class="section-title">📋 4. CATÁLOGO COMPLETO DE PROMPTS DEL MODO CREADOR</h2>
+
+      <div class="card card-highlight">
+        <p>En esta sección tienes <strong>todos los prompts empleados a lo largo del tutorial</strong> repetidos íntegramente y listos para copiar con un solo clic, acompañados de una explicación clara de <strong>dónde y cómo se emplea cada uno</strong> dentro de DeepSeek Harness.</p>
+      </div>
+
+      <!-- PREFIJO UNIVERSAL -->
+      <div class="card card-warning">
+        <h3>🔑 Prefijo Universal de Configuración en Inglés</h3>
+        <p><strong>Dónde se emplea:</strong> Se coloca al principio del mensaje en el área de chat de DeepSeek Harness (tras activar <code>Creator Mode</code> y pulsar <code>More → Crear un plugin</code>) en los <strong>Prompts 01 al 07 y 09 al 12</strong> para obligar al sistema a crear un acceso directo en la barra lateral izquierda.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prefijo Universal (Inglés)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-universal">COPIAR PREFIJO</button>
+          </div>
+          <pre class="code-content" id="p-universal">Create a DSH plugin with a left sidebar entry.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 01 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 01 · Diseño y Creatividad · Página PDF: 04 · Vídeo: 22:00</span>
+        <h3>Prompt 01: Estudio Creativo (Miniaturas YouTube 16:9)</h3>
+        <p><strong>Dónde se emplea:</strong> Se introduce en el chat de DeepSeek Harness en <code>Creator Mode</code> usando <code>More → Crear un plugin</code>. Se utiliza para construir e instalar el taller gráfico de miniaturas 16:9 con exportación real a PNG ($1280 \times 720$ píxeles) y edición interactiva conectada al chat.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 01 — Estudio Creativo (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-01">COPIAR PROMPT 01</button>
+          </div>
+          <pre class="code-content" id="p-01">Create a DSH plugin with a left sidebar entry. Crea e instala un plugin de DeepSeek Harness llamado "Estudio Creativo", accesible desde la conversación y la barra lateral. Quiero una aplicación visual para diseñar miniaturas de YouTube en formato 16:9, con una interfaz profesional, moderna y completamente en español. Incluye un lienzo central grande con vista previa instantánea y un panel lateral para personalizar: Título y subtítulo, editables directamente sobre el diseño; Tipografías llamativas, tamaños, contornos y sombras; Fondos con shaders animados, degradados, texturas y efectos de iluminación; Paletas de colores seleccionables con un clic; Plantillas con distintas composiciones; Posibilidad de subir imágenes, logos y eliminar o cambiar elementos; Exportación real a PNG en 1280 × 720 píxeles. El diseño inicial debe ser espectacular, con el texto "LA IA LO CAMBIA TODO", tipografía gigante, fondo futurista y efectos luminosos. Conéctalo con el agente para poder pedir modificaciones desde el chat, como "Cambia el fondo a violeta", y que se reflejen realmente en el editor. Prioriza una experiencia muy visual, con controles que reaccionen instantáneamente, sin menús ni textos innecesarios. Instala el plugin y verifica la edición y exportación funcionales.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 02 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 02 · Productividad · Página PDF: 05 · Vídeo: 10:00</span>
+        <h3>Prompt 02: Mi Espacio (Tablero Kanban de Productividad)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para generar una aplicación Kanban persistente con tres columnas (`Ideas`, `En proceso`, `Completado`) conectada mediante herramientas reales al agente del chat.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 02 — Mi Espacio (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-02">COPIAR PROMPT 02</button>
+          </div>
+          <pre class="code-content" id="p-02">Create a DSH plugin with a left sidebar entry. Crea e instala un plugin persistente en DeepSeek Harness llamado "Mi Espacio", accesible desde la barra lateral. Quiero una mini aplicación de productividad tipo Kanban, con un diseño moderno, minimalista y visualmente atractivo, íntegramente en español. Incluye tres columnas: "Ideas", "En proceso" y "Completado". Permite crear tarjetas con título, descripción, etiquetas de colores, fecha y checklist, arrastrarlas entre columnas y abrirlas para editarlas. Lo más importante: conecta el tablero con el agente mediante herramientas reales, para que pueda crear, consultar, modificar y completar tareas directamente desde la conversación cuando se lo pida. Por ejemplo: "Organiza mis ideas para el próximo vídeo" o "Marca como completada la investigación". Guarda automáticamente toda la información, incluye buscador y filtros y muestra una pequeña animación cuando se complete una tarea. Usa las APIs oficiales de plugins de Harness, verifica que la conexión con el agente funciona realmente e instala el plugin. No quiero una simple maqueta visual.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 03 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 03 · Creación de Contenido · Página PDF: 06 · Vídeo: 25:00</span>
+        <h3>Prompt 03: MiniCut (Editor de Vídeo Funcional MP4)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para construir un editor de vídeo no lineal capaz de importar dos archivos MP4 locales, recortarlos en una línea de tiempo y exportar un archivo MP4 real utilizando FFmpeg.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 03 — MiniCut (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-03">COPIAR PROMPT 03</button>
+          </div>
+          <pre class="code-content" id="p-03">Create a DSH plugin with a left sidebar entry. Crea un plugin persistente de DeepSeek Harness llamado "MiniCut". Quiero un editor de vídeo funcional inspirado en el flujo de trabajo de herramientas de edición profesionales, pero con una interfaz mucho más sencilla. Primera versión obligatoria: 1. Importar dos archivos MP4 locales. 2. Mostrar una previsualización reproducible. 3. Colocar los vídeos sobre una línea de tiempo. 4. Recortar el principio y el final de cada clip. 5. Reordenarlos. 6. Exportar un único MP4 de verdad y guardarlo en una ubicación que yo elija. Diseño: Previsualización grande arriba; Timeline abajo; Panel de propiedades lateral; Estética limpia y profesional. Extra, únicamente después de validar lo anterior: Permitir que le diga en el chat "recorta los primeros tres segundos del segundo vídeo" y ejecutar esa edición. Comprueba el archivo exportado reproduciéndolo fuera de DeepSeek Harness. Valida su duración y resolución. No simules una exportación ni marques funciones como terminadas si los archivos generados no son válidos. Si necesitas FFmpeg u otra dependencia, inspecciona primero el entorno y solicita autorización antes de instalar.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 04 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 04 · Experiencias Interactivas · Página PDF: 07 · Vídeo: 15:00</span>
+        <h3>Prompt 04: IA Generativa en 3D</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para generar un laboratorio interactivo tridimensional que enseña cómo funcionan los tokens, vectores, atención y probabilidades de un LLM, respetando el margen de los botones nativos de ventana en macOS.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 04 — IA Generativa en 3D (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-04">COPIAR PROMPT 04</button>
+          </div>
+          <pre class="code-content" id="p-04">Create a DSH plugin with a left sidebar entry. Crea un plugin para DeepSeek Harness con una entrada en la barra lateral izquierda: un juego interactivo de demostración en 3D que me ayude a comprender el proceso de un modelo de IA generativa. Mantén el título del panel y la barra de herramientas libres de los botones nativos de la ventana de macOS para que no se superpongan.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 05 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 05 · Productividad · Página PDF: 08 · Vídeo: 27:00</span>
+        <h3>Prompt 05: Mission Control (Centro de Mando Global)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para instalar un panel de supervisión global de todas las sesiones abiertas en DeepSeek Harness, mostrando estados reales, tiempos, llamadas a herramientas y costes.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 05 — Mission Control (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-05">COPIAR PROMPT 05</button>
+          </div>
+          <pre class="code-content" id="p-05">Create a DSH plugin with a left sidebar entry. Desarrolla e instala un plugin llamado "Mission Control". Crea un dashboard visual para supervisar todas mis sesiones y tareas de DeepSeek Harness. DISEÑO: Tarjetas individuales para cada sesión activa; Nombre de la sesión y modelo seleccionado; Cronómetro independiente de cada tarea; Estados de ejecución: trabajando, esperando, completado, error o inactivo; Número de llamadas a herramientas y tareas completadas; Coste estimado por sesión, si existen métricas suficientes; Una vista de actividad reciente y filtros por estado. INTERACCIÓN: Al seleccionar una tarjeta, navegar a la sesión correspondiente; Poder ordenar por tiempo de ejecución y tareas pendientes; Resaltar las sesiones que necesitan mi intervención; Actualizar los estados automáticamente sin enviar prompts adicionales. Usa el registro oficial de sesiones y eventos de Harness. No simules agentes ni porcentajes de progreso. Instala el plugin, verifica el comportamiento con al menos dos sesiones y conserva la configuración visual al reiniciar.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 06 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 06 · Productividad · Página PDF: 09 · Vídeo: 08:00</span>
+        <h3>Prompt 06: AI Usage Monitor (Monitor de Tokens, Contexto y Costes USD)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para desplegar un panel financiero y técnico que lee las variables oficiales <code>tokenUsage</code>, <code>contextPressure</code>, <code>contextWindow</code> y <code>projectedTokens</code> sin duplicar tokens de razonamiento.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 06 — AI Usage Monitor (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-06">COPIAR PROMPT 06</button>
+          </div>
+          <pre class="code-content" id="p-06">Create a DSH plugin with a left sidebar entry. Crea e instala un plugin persistente llamado "AI Usage Monitor" para DeepSeek Harness. Quiero un panel compacto y profesional que muestre en tiempo real el consumo de tokens, el espacio de contexto disponible y el coste estimado dependiendo del modelo y proveedor seleccionados. INTERFAZ: Panel flotante que pueda minimizarse; Nombre del modelo y proveedor activo; Tokens de entrada, salida, caché y razonamiento, cuando estén disponibles; Tokens utilizados por tarea, sesión y total histórico; Coste estimado en USD por tarea y sesión; Barra visual del porcentaje de ventana de contexto ocupado; Indicadores opcionales de velocidad de generación y cache hit; Gráficos históricos por modelo. DATOS REALES: 1. Utiliza las proyecciones oficiales tokenUsage y contextPressure de Harness, si están disponibles. 2. Consulta contextWindow y projectedTokens para calcular el espacio de contexto restante de la siguiente petición. Identifícalo como aproximado cuando corresponda. 3. Obtén el identificador real del proveedor y modelo usado en cada llamada. No supongas que toda la sesión utiliza siempre el mismo modelo. 4. Calcula costes utilizando precios vigentes y verificables por millón de tokens para entrada, salida, lectura de caché y escritura de caché, según el proveedor. 5. Incluye un apartado para configurar manualmente precios y fecha de vigencia. 6. Considera los reintentos de llamadas y evita contabilizaciones duplicadas. 7. No sumes dos veces los tokens de razonamiento si ya están incluidos en los de salida. 8. Si el proveedor dispone de una API documentada para consultar saldo o cuota restante y el usuario autoriza su uso, añádelo como apartado independiente. 9. Si no existe esa API, muestra "Cuota de cuenta: no disponible". Nunca confundas cuota de cuenta con contexto restante. 10. Si no existen datos o tarifas fiables, indica "No disponible" o "Estimación incompleta" en lugar de inventar valores. Implementa las actualizaciones sin generar llamadas adicionales al modelo. Instala el plugin desde Plugin Manager, comprueba sus cifras frente a las estadísticas nativas y verifica el funcionamiento cambiando de modelo.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 07 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 07 · Productividad · Página PDF: 10 · Vídeo: 04:00</span>
+        <h3>Prompt 07: Task Celebration HUD (Cronómetro + Confeti)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para crear un widget flotante sobre <code>shell.overlay</code> que cronometra las tareas de la IA en formato <code>MM:SS</code> y celebra con confeti únicamente cuando la tarea finaliza con éxito (<code>reason.kind === "completed"</code>).</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 07 — Task Celebration HUD (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-07">COPIAR PROMPT 07</button>
+          </div>
+          <pre class="code-content" id="p-07">Create a DSH plugin with a left sidebar entry. Crea e instala un plugin persistente para DeepSeek Harness llamado "Task Celebration HUD". OBJETIVO: Mostrar un cronómetro grande mientras la IA ejecuta una tarea y celebrar su finalización con una animación de confeti. INTERFAZ: Widget flotante siempre visible dentro de Harness; Cronómetro gigante en formato MM:SS; Estados: Trabajando, Usando herramientas, Esperando permiso, Completado, Cancelado y Error; Permitir arrastrar el widget, minimizarlo y ajustar su tamaño; Diseño moderno, oscuro, legible y con animaciones fluidas. COMPORTAMIENTO: 1. Detecta automáticamente el inicio de una tarea real y comienza el cronómetro. 2. Usa los eventos oficiales de sesión para actualizar su estado. Inspecciona session/event, turn/start y turn/end. 3. Cuando termine correctamente (reason.kind === "completed"), muestra una animación de confeti durante tres segundos, un check verde y el tiempo total. 4. No lances confeti si la tarea falla, se cancela, queda bloqueada o termina por límite de tokens. 5. Evita celebraciones duplicadas por eventos históricos o recargas. 6. Incorpora un sonido de victoria opcional, desactivado por defecto. 7. Permite consultar cuánto tardaron las últimas cinco tareas. IMPLEMENTACIÓN: Inspecciona las capacidades de la interfaz. Prioriza shell.overlay u otra superficie flotante oficialmente disponible. Utiliza el sistema real de plugins Cordis y Plugin Manager. No generes únicamente una web o simulación. Instálalo, ejecútalo con una tarea breve, comprueba los eventos reales y verifica que continúa funcionando después de reiniciar la sesión.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 08 -->
+      <div class="card card-highlight">
+        <span class="pedagogy-pill">Prompt 08 · MCP y Documentación · Página PDF: 11 · Vídeo: 17:00</span>
+        <h3>Prompt 08: Investigar con DeepWiki (Consulta Técnica MCP)</h3>
+        <p><strong>Dónde se emplea:</strong> <em>Excepción sin prefijo en inglés.</em> Se envía directamente en el cuadro de chat de DeepSeek Harness <strong>después de haber instalado el conector DeepWiki MCP con el Prompt 11</strong>. Sirve para auditar la documentación oficial del repositorio <code>deepseek-ai/deepseek-harness</code>.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 08 — Investigar con DeepWiki (Consulta Directa MCP)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-08">COPIAR PROMPT 08</button>
+          </div>
+          <pre class="code-content" id="p-08">Utiliza exclusivamente las herramientas del MCP DeepWiki para investigar el repositorio: deepseek-ai/deepseek-harness. Necesito saber cómo desarrollar correctamente un plugin que muestre un cronómetro flotante y escuche cuándo termina una tarea del agente. 1. Consulta la estructura de documentación disponible. 2. Localiza información sobre Cordis, interfaz flotante, eventos de sesión y Plugin Manager. 3. Explícame qué componentes oficiales debería utilizar. 4. Dame referencias al código o documentación donde se describen. 5. Diferencia claramente lo documentado de cualquier propuesta que deduzcas. No modifiques archivos todavía. Primero necesito comprobar que las herramientas del MCP están funcionando y recibir las referencias.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 09 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 09 · Diseño y Creatividad · Página PDF: 12 · Vídeo: 12:00</span>
+        <h3>Prompt 09: Retro AI OS (Tema Visual Pixel Art Años 90 + Mascota Reactiva)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para transformar la apariencia de DeepSeek Harness en un sistema operativo retro de los años 90 con mascota pixel art que reacciona a los estados reales del agente y un interruptor para activar/desactivar el tema.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 09 — Retro AI OS (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-09">COPIAR PROMPT 09</button>
+          </div>
+          <pre class="code-content" id="p-09">Create a DSH plugin with a left sidebar entry. Quiero que DeepSeek Harness tenga un modo visual "Retro AI OS" mediante un plugin instalable. Reinterpreta la interfaz como un sistema operativo pixel art de los años 90, con: Ventanas, paneles y botones de estilo coherente; Barra de estado y animaciones discretas; Una mascota pixel art original que reaccione visualmente a estados reales del agente: trabajando, esperando aprobación y tarea terminada; Interruptor para activar y desactivar el tema; Persistencia al cerrar y volver a abrir Harness. No alteres las funciones internas ni ocultes controles importantes. Mantén la legibilidad y la accesibilidad. Construye e instala el plugin utilizando el sistema oficial, verifica que el tema se puede revertir y enséñame los cambios aplicados. Puedes añadir un selector con otros estilos.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 10 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 10 · Experiencias Interactivas · Página PDF: 13 · Vídeo: 18:00</span>
+        <h3>Prompt 10: Escape AI (Videojuego 3D Interactivo en Laboratorio Futurista)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para construir e instalar un videojuego 3D jugable con controles WASD + ratón, colisiones reales, llave recolectable y apertura de puerta bloqueada.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 10 — Escape AI (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-10">COPIAR PROMPT 10</button>
+          </div>
+          <pre class="code-content" id="p-10">Create a DSH plugin with a left sidebar entry. Construye un plugin llamado "Escape AI" con un videojuego 3D interactivo dentro de la interfaz de DeepSeek Harness. Concepto: escapar de un laboratorio futurista. REQUISITOS: Cámara en primera persona o tercera persona; Movimiento con WASD y ratón; Dos habitaciones conectadas; Una llave que se pueda recoger; Una puerta bloqueada que solo se abra con la llave; Obstáculos con colisiones reales; Temporizador, pantalla de victoria y botón para reiniciar; Estética low-poly cuidada, luces y materiales coherentes; Instrucciones de control visibles al iniciar. Empieza por un nivel pequeño completamente funcional. No añadas más contenido hasta verificar movimiento, colisiones, recogida de objetos, apertura de puertas y victoria. Instala el juego como plugin persistente y comprueba todas esas acciones. No considero terminado el trabajo si únicamente se muestra una escena 3D sin mecánicas jugables.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 11 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 11 · MCP y Documentación · Página PDF: 14 · Vídeo: 17:00</span>
+        <h3>Prompt 11: Instalar DeepWiki MCP (Conector Streamable HTTP)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para registrar, activar y verificar el servidor MCP <code>deepwiki</code> conectado a <code>https://mcp.deepwiki.com/mcp</code> mediante transporte Streamable HTTP.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 11 — Instalar DeepWiki MCP (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-11">COPIAR PROMPT 11</button>
+          </div>
+          <pre class="code-content" id="p-11">Create a DSH plugin with a left sidebar entry. Estoy utilizando DeepSeek Harness en Creator Mode. Quiero que añadas al perfil actual un conector MCP real llamado "deepwiki". Endpoint: https://mcp.deepwiki.com/mcp Transporte: Streamable HTTP. No necesita autenticación para repositorios públicos. Realiza lo siguiente: 1. Inspecciona la configuración disponible de plugins y MCP. 2. Crea e instala el bundle de configuración necesario mediante el sistema oficial de Plugin Manager. 3. Activa el servidor y verifica su estado real. 4. Comprueba que están disponibles sus herramientas de consulta. 5. Utiliza una herramienta real para consultar la documentación del repositorio "deepseek-ai/deepseek-harness". 6. Explícame qué herramienta llamaste, qué parámetros utilizaste y cuál fue su respuesta. 7. Comprueba que el conector sigue disponible al abrir una segunda sesión. No simules conexiones ni respuestas. Si el plugin requiere reinicio, indícalo y realiza la comprobación después.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPT 12 -->
+      <div class="card">
+        <span class="pedagogy-pill">Prompt 12 · Experiencias Interactivas · Página PDF: 15 · Vídeo: 20:00</span>
+        <h3>Prompt 12: Earth Live (Globo Terráqueo 3D con Datos USGS y NASA EONET)</h3>
+        <p><strong>Dónde se emplea:</strong> Se emplea en el Modo Creador (`More → Crear un plugin`) para construir un globo terráqueo interactivo en 3D que consulta en vivo la API GeoJSON de terremotos de USGS y la API EONET de eventos activos de la NASA.</p>
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt 12 — Earth Live (Íntegro con Prefijo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-12">COPIAR PROMPT 12</button>
+          </div>
+          <pre class="code-content" id="p-12">Create a DSH plugin with a left sidebar entry. Crea e instala un plugin persistente de DeepSeek Harness llamado "Earth Live". Quiero un panel en la barra lateral con una visualización 3D interactiva del planeta Tierra, estética de centro de control espacial, fondo oscuro y controles profesionales. FUNCIONALIDAD: 1. Consulta terremotos reales de las últimas 24 horas en: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson 2. Consulta eventos naturales activos en: https://eonet.gsfc.nasa.gov/api/v3/events?status=open 3. Dibuja cada evento en su posición geográfica correcta. Diferencia terremotos, incendios y tormentas mediante símbolos y colores. 4. Permite girar, acercar y alejar la Tierra. Al seleccionar un evento, abre una ficha con nombre, fecha, localización, intensidad si existe y enlace a la fuente original. 5. Añade filtros por categoría, magnitud y fecha; buscador y botón para actualizar datos. 6. Muestra la hora de la última actualización. Si una fuente falla, informa del error: no inventes eventos ni utilices datos de demostración sin identificarlos. REQUISITOS TÉCNICOS: Debe ser un plugin real instalado en Harness, no una web externa. Inspecciona primero las capacidades disponibles del runtime. Utiliza librerías 3D compatibles y organiza los componentes para evitar bloqueos. Verifica al menos una consulta real de cada API. Comprueba que se abre, que se puede interactuar con el globo y que sobrevive a una nueva sesión. Si hay limitaciones, explícalas antes de darlo por terminado.</pre>
+        </div>
+      </div>
+
+      <!-- PROMPTS COMPLEMENTARIOS DE ITERACIÓN Y MARCA BLANCA -->
+      <div class="card card-success">
+        <span class="pedagogy-pill">Prompts Complementarios de Iteración en Chat y Rebranding</span>
+        <h3>Prompts de Modificación en Vivo y Marca Blanca (Módulos 1, 3, 4 y 7)</h3>
+        <p><strong>Dónde se emplean:</strong> Estos prompts cortos se escriben directamente en la conversación de un plugin ya creado para modificar su estado en vivo, o bien en una sesión de <code>Creator Mode</code> para personalizar la marca (rebranding) de la aplicación.</p>
+
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Iteración en Chat — Estudio Creativo (Cambiar paleta/fondo)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-extra-1">COPIAR</button>
+          </div>
+          <pre class="code-content" id="p-extra-1">Cambia la paleta de colores a todo rosa atardecer y cambia el fondo a violeta.</pre>
+        </div>
+
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Iteración en Chat — Mi Espacio Kanban (Control bidireccional)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-extra-2">COPIAR</button>
+          </div>
+          <pre class="code-content" id="p-extra-2">Organiza mis ideas para el próximo vídeo y marca como completada la tarea de investigación.</pre>
+        </div>
+
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Iteración en Chat — MiniCut (Recorte de vídeo por instrucción)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-extra-3">COPIAR</button>
+          </div>
+          <pre class="code-content" id="p-extra-3">Recorta los primeros tres segundos del segundo vídeo.</pre>
+        </div>
+
+        <div class="copy-block">
+          <div class="copy-header">
+            <span class="copy-label">Prompt de Marca Blanca / Rebranding (Nombre y Logotipo del Harness)</span>
+            <button type="button" class="copy-btn" data-copy-target="p-extra-4">COPIAR</button>
+          </div>
+          <pre class="code-content" id="p-extra-4">Cambia el nombre de la aplicación de DeepSeek Harness a MiEmpresa Harness y reemplaza el icono por el logo adjunto.</pre>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(3)">⬅ Anterior: PRÁCTICA</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(5)">Próxima: 33 Preguntas (Q&amp;A) ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 5: 33 PREGUNTAS (Q&A) — ANTES DE LA PESTAÑA ERRORES          -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-5" data-t="33 Preguntas (Q&A)">
+      <h2 class="section-title">❓ 5. 33 PREGUNTAS Y RESPUESTAS ORDENADAS POR NIVEL DE DIFICULTAD</h2>
+
+      <div class="card card-highlight">
+        <p>Pon a prueba y consolida todo tu dominio de <strong>DeepSeek Harness Creator Mode</strong> con las <strong>33 preguntas y respuestas oficiales</strong> estructuradas en tres niveles progresivos de dificultad: <strong>Nivel 1 (Básico: 1 a 11)</strong>, <strong>Nivel 2 (Avanzado: 12 a 22)</strong> y <strong>Nivel 3 (PRO: 23 a 33)</strong>.</p>
+        <div class="filter-pills-row" role="group" aria-label="Filtrar preguntas por nivel de dificultad">
+          <button type="button" class="filter-pill active" data-qa-filter="all">Todas (33)</button>
+          <button type="button" class="filter-pill" data-qa-filter="1">Nivel 1 · Básico (1-11)</button>
+          <button type="button" class="filter-pill" data-qa-filter="2">Nivel 2 · Avanzado (12-22)</button>
+          <button type="button" class="filter-pill" data-qa-filter="3">Nivel 3 · PRO (23-33)</button>
+          <button type="button" class="tool-btn" id="qa-expand-all-btn">Desplegar / Contraer todas</button>
+        </div>
+      </div>
+
+      <!-- BLOQUE NIVEL 1 (PREGUNTAS 1 A 11) -->
+      <div class="qa-level-block" data-level="1">
+        <h3>🟢 Nivel 1 — Básico (Preguntas 1 a 11)</h3>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 1. ¿Es necesario saber programar para utilizar el Modo CREADOR de DeepSeek Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>No. El Modo CREADOR está diseñado para que cualquier persona pueda construir aplicaciones escribiendo instrucciones en español neutro. El agente de IA se encarga de redactar, estructurar e instalar el código técnico por ti.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 2. ¿Tengo que pagar obligatoriamente por una suscripción mensual para usar la aplicación?</span></summary>
+          <div class="collapsible-body">
+            <p>No. La aplicación de escritorio DeepSeek Harness es de código abierto y descarga gratuita. Además, puedes conectar proveedores con modelos 100% gratuitos como OpenRouter sin gastar dinero.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 3. ¿En qué sistemas operativos puedo instalar DeepSeek Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>Está disponible formalmente con instaladores sencillos para macOS (tanto procesadores Apple Silicon M-Series como Intel) y Windows (10 y 11 de 64 bits).</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 4. ¿Para qué sirve el prefijo <code>Create a DSH plugin with a left sidebar entry.</code>?</span></summary>
+          <div class="collapsible-body">
+            <p>Es una instrucción técnica universal en inglés que le indica al motor del arnés que debe compilar el plugin de forma que cree una pestaña o acceso directo permanente en la barra lateral izquierda de la interfaz.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 5. ¿Dónde se encuentra el botón para activar el Modo CREADOR?</span></summary>
+          <div class="collapsible-body">
+            <p>Se ubica en la barra superior de la aplicación, en el desplegable de modos junto a la selección del modelo de IA, cambiando la opción de <code>Standard Mode</code> a <code>Creator Mode</code>.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 6. ¿Qué ocurre si me aparece un aviso solicitando recargar créditos al iniciar la aplicación?</span></summary>
+          <div class="collapsible-body">
+            <p>Puedes ignorar o cerrar la advertencia. No es obligatorio recargar saldo si decides conectar tu propia clave API de OpenRouter o vincular tu cuenta existente.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 7. ¿Qué es OpenRouter y por qué se recomienda en el tutorial?</span></summary>
+          <div class="collapsible-body">
+            <p>OpenRouter es un servicio unificado que agrupa decenas de modelos de IA de distintos desarrolladores. Se recomienda porque ofrece multitud de modelos potentes de uso totalmente gratuito utilizando la etiqueta de búsqueda <code>free</code>.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 8. ¿Se borran mis plugins creados al cerrar la aplicación DeepSeek Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>No. Todos los plugins instalados en Modo CREADOR son persistentes y continúan disponibles en la barra lateral cada vez que vuelves a abrir la aplicación.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 9. ¿Qué es el widget Task Celebration HUD?</span></summary>
+          <div class="collapsible-body">
+            <p>Es un plugin que muestra un cronómetro grande en pantalla mientras la IA procesa una tarea y lanza una animación festiva de confeti cuando el trabajo concluye con éxito.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 10. ¿Puedo cambiar el aspecto visual de la aplicación para que parezca un sistema operativo antiguo?</span></summary>
+          <div class="collapsible-body">
+            <p>Sí. Utilizando el plugin <strong>Retro AI OS</strong>, la interfaz adopta una estética pixel art retro inspirada en los sistemas informáticos de los años 90.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-1">Nivel 1</span> 11. ¿Dónde se encuentra el menú para añadir nuevas claves API de modelos?</span></summary>
+          <div class="collapsible-body">
+            <p>Se accede haciendo clic en el icono de rueda dentada de <strong>Ajustes</strong> (Settings) en la esquina superior de la ventana y seleccionando la sección de <strong>Modelos</strong> o <strong>Proveedores</strong>.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- BLOQUE NIVEL 2 (PREGUNTAS 12 A 22) -->
+      <div class="qa-level-block" data-level="2">
+        <h3>🟡 Nivel 2 — Avanzado (Preguntas 12 a 22)</h3>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 12. ¿Cómo funciona la interacción entre el chat de la conversación y un plugin como Mi Espacio?</span></summary>
+          <div class="collapsible-body">
+            <p>El plugin conecta sus elementos visuales (como el tablero Kanban) con las herramientas internas del agente de IA, permitiendo que las órdenes escritas en el chat (como <em>"añade una tarea"</em>) modifiquen directamente el estado de las tarjetas.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 13. ¿Qué resolución y formato exige el prompt del plugin Estudio Creativo para sus exportaciones?</span></summary>
+          <div class="collapsible-body">
+            <p>Exige la generación e independización de archivos de imagen en formato <strong>PNG</strong> con una resolución exacta de <strong>$1280 \times 720$ píxeles</strong> en formato de aspecto $16:9$.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 14. ¿Qué sucede si mi sistema no tiene instalado FFmpeg al intentar exportar un vídeo con el plugin MiniCut?</span></summary>
+          <div class="collapsible-body">
+            <p>El plugin detectará la ausencia de la dependencia en el entorno local y solicitará la autorización del usuario en la pantalla de chat antes de proceder a su descarga e instalación.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 15. ¿De dónde obtiene el plugin Earth Live la información sobre terremotos y desastres naturales?</span></summary>
+          <div class="collapsible-body">
+            <p>Se conecta en tiempo real a las APIs abiertas oficiales del Servicio Geológico de EE. UU. (USGS GeoJSON) para datos sísmicos y de la NASA (EONET API) para incendios y tormentas.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 16. ¿Cuál es la diferencia entre el consumo de tokens y la ventana de contexto en AI Usage Monitor?</span></summary>
+          <div class="collapsible-body">
+            <p>El consumo de tokens mide el volumen de datos procesados (entrada y salida), mientras que la ventana de contexto representa el porcentaje ocupado del espacio máximo de memoria disponible para esa sesión.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 17. ¿Por qué se recomienda ajustar el nivel de esfuerzo del modelo en "Medio" o "Alto" al crear plugins?</span></summary>
+          <div class="collapsible-body">
+            <p>Porque compilar código ejecutable de alta calidad e interfaces 3D requiere que el modelo dedique mayor tiempo de procesamiento interno a resolver la arquitectura lógica sin cometer errores de sintaxis.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 18. ¿Cómo evita AI Usage Monitor contabilizar datos duplicados de tokens de razonamiento?</span></summary>
+          <div class="collapsible-body">
+            <p>El código del plugin verifica la estructura de respuesta de la API y garantiza que los tokens de razonamiento (<em>reasoning tokens</em>) no se sumen a la cuenta total si el proveedor ya los incluye dentro de la cifra de tokens de salida.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 19. ¿Qué mecánicas de control requiere el videojuego 3D Escape AI para validar su funcionamiento?</span></summary>
+          <div class="collapsible-body">
+            <p>Requiere desplazamiento con teclas WASD, control de cámara con el ratón, interacción de inventario con la tecla <code>E</code> para recoger una llave y desbloquear la puerta de salida, e incluye sistema de colisiones.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 20. ¿Qué se debe hacer si los controles de un plugin 3D tapan los botones nativos de cierre de ventana en Mac?</span></summary>
+          <div class="collapsible-body">
+            <p>Se debe especificar en el prompt del plugin la restricción explícita de dejar libre la esquina superior de la interfaz para evitar superposiciones con los botones del sistema operativo (<code>Traffic Lights</code>).</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 21. ¿Qué información muestra el panel Mission Control sobre las sesiones abiertas?</span></summary>
+          <div class="collapsible-body">
+            <p>Muestra el modelo asignado, el estado de ejecución (<code>Trabajando</code>, <code>Esperando</code>, <code>Completado</code>, <code>Error</code> o <code>Inactivo</code>), el tiempo de procesamiento, el número de herramientas llamadas y accesos directos de navegación.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-2">Nivel 2</span> 22. ¿Se pueden subir imágenes y fondos propios dentro del plugin Estudio Creativo?</span></summary>
+          <div class="collapsible-body">
+            <p>Sí. La especificación del plugin incluye controles para cargar archivos de imagen y logotipos locales desde el disco duro para integrarlos en la miniatura.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- BLOQUE NIVEL 3 (PREGUNTAS 23 A 33) -->
+      <div class="qa-level-block" data-level="3">
+        <h3>🟣 Nivel 3 — PRO (Preguntas 23 a 33)</h3>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 23. ¿Qué es el protocolo MCP (Model Context Protocol) y cuál es su función en Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>Es un estándar cliente-servidor que permite a la IA conectar de forma segura con servidores remotos de herramientas, extrayendo información estructurada o ejecutando comandos en plataformas externas.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 24. ¿Qué endpoint y protocolo de transporte utiliza el plugin de instalación de DeepWiki MCP?</span></summary>
+          <div class="collapsible-body">
+            <p>Utiliza el endpoint <code>https://mcp.deepwiki.com/mcp</code> bajo el protocolo de transporte <strong>Streamable HTTP</strong>, el cual no requiere autenticación previa para repositorios de acceso público.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 25. ¿Cómo se ejecuta una búsqueda técnica en el repositorio de GitHub de DeepSeek mediante MCP?</span></summary>
+          <div class="collapsible-body">
+            <p>Una vez conectado el servidor MCP <code>deepwiki</code>, se envía una consulta (como el Prompt 08) especificando el repositorio objetivo (<code>deepseek-ai/deepseek-harness</code>) para inspeccionar su código y manuales.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 26. ¿Qué es el sistema Cordis dentro de la arquitectura de DeepSeek Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>Es la infraestructura y framework interno sobre el cual se construyen, registran y gestionan las extensiones, eventos de sesión y superficies flotantes en el entorno de la aplicación.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 27. ¿Cómo se lleva a cabo el proceso de marca blanca o rebranding completo en DeepSeek Harness?</span></summary>
+          <div class="collapsible-body">
+            <p>Se le solicita al agente en Modo CREADOR que modifique el título del arnés y el archivo de icono gráfico, seguido de un <strong>reinicio completo</strong> de la aplicación para que el sistema recargue la interfaz modificada.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 28. ¿Qué condición de evento específica evita que Task Celebration HUD lance confeti en tareas fallidas?</span></summary>
+          <div class="collapsible-body">
+            <p>La comprobación de la propiedad <code>reason.kind === "completed"</code> en la carga útil del evento de sesión (<code>turn/end</code>), descartando eventos cancelados, bloqueados o interrumpidos por errores.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 29. ¿Cómo se gestionan las fuentes de datos en Earth Live cuando un servidor externo de la NASA o USGS no responde?</span></summary>
+          <div class="collapsible-body">
+            <p>El plugin captura la excepción de red y despliega un aviso claro de error en la interfaz sin inventar eventos sísmicos ni rellenar la pantalla con datos falsos de simulación.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 30. ¿Qué diferencia existe entre las variables <code>contextPressure</code> y <code>projectedTokens</code> en la API de Harness?</span></summary>
+          <div class="collapsible-body">
+            <p><code>contextPressure</code> calcula la carga porcentual actual del búfer de memoria, mientras que <code>projectedTokens</code> realiza una estimación del espacio de contexto que ocupará la respuesta que se va a generar.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 31. ¿Es posible deshabilitar temporalmente un plugin sin desinstalarlo de la aplicación?</span></summary>
+          <div class="collapsible-body">
+            <p>Sí. Accediendo al menú de <strong>Plugins</strong> en la aplicación, es posible cambiar el conmutador de activación (<code>Habilitar</code> / <code>Deshabilitar</code>) de cualquier complemento de forma individual.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 32. ¿Cómo se conecta una clave de API de OpenAI u otro proveedor externo usando OpenRouter?</span></summary>
+          <div class="collapsible-body">
+            <p>OpenRouter actúa como intermediario: ingresas tu clave de OpenRouter en Harness y, desde el catálogo de OpenRouter, seleccionas la API del proveedor de destino manteniendo una única configuración.</p>
+          </div>
+        </details>
+
+        <details class="collapsible-card qa-item" open>
+          <summary><span><span class="level-badge level-3">Nivel 3</span> 33. ¿Cuál es el procedimiento recomendado para depurar un plugin que presenta errores visuales en su código?</span></summary>
+          <div class="collapsible-body">
+            <p>Se debe utilizar el chat de la sesión donde se creó el plugin para solicitar la corrección (ejemplo: <em>"El botón de exportar no responde al hacer clic, revisa la función de disparo y actualiza el plugin"</em>), permitiendo que el agente recompile el módulo.</p>
+          </div>
+        </details>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(4)">⬅ Anterior: PROMPTS</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(6)">Próxima: ERRORES ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 6: ERRORES (TROUBLESHOOTING)                                -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-6" data-t="ERRORES">
+      <h2 class="section-title">⚠️ 6. GUÍA DE SOLUCIÓN DE PROBLEMAS (TROUBLESHOOTING) Y ERRORES FRECUENTES</h2>
+
+      <div class="card card-warning">
+        <span class="pedagogy-pill">Módulo 09 · Diagnóstico y Recuperación Rápida</span>
+        <p>Si durante la instalación o el desarrollo de tus plugins encuentras algún obstáculo técnico, localiza el síntoma en la tabla maestra o en los bloques detallados de resolución paso a paso:</p>
+      </div>
+
+      <div class="card">
+        <h3>Tabla Maestra de Diagnóstico Rápido</h3>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Problema / Síntoma</th>
+                <th>Causa Probable</th>
+                <th>Solución Paso a Paso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. La aplicación pide comprar créditos de API al iniciar.</strong></td>
+                <td>Ajuste por defecto del proveedor nativo de DeepSeek.</td>
+                <td>Omite el aviso. Ve a <em>Ajustes &gt; Modelos</em>, añade OpenRouter y usa modelos marcados como <code>free</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>2. El plugin instalado no aparece en la barra lateral.</strong></td>
+                <td>Se omitió el prefijo en inglés al redactar el prompt.</td>
+                <td>Vuelve a enviar el prompt asegurándote de incluir al inicio: <code>Create a DSH plugin with a left sidebar entry.</code></td>
+              </tr>
+              <tr>
+                <td><strong>3. MiniCut no exporta el vídeo MP4 o muestra un error de sistema.</strong></td>
+                <td>Falta el binario de FFmpeg en las variables de entorno.</td>
+                <td>Autoriza al arnés en el chat para instalar la dependencia <code>FFmpeg</code> o instálala localmente en tu sistema.</td>
+              </tr>
+              <tr>
+                <td><strong>4. El confeti de Task Celebration sale repetidamente.</strong></td>
+                <td>Duplicación de eventos históricos al recargar la sesión.</td>
+                <td>Pide al agente actualizar el plugin con la condición <code>reason.kind === "completed"</code> sin re-evaluar turnos antiguos.</td>
+              </tr>
+              <tr>
+                <td><strong>5. El juego 3D tapa los botones de cerrar/minimizar en macOS.</strong></td>
+                <td>Superposición con el área del sistema operativo (<code>Traffic Lights</code>).</td>
+                <td>Añade la restricción: <em>"Mantén la barra superior libre de los controles nativos de ventana de macOS"</em>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-danger">
+          <h3>9.4. Discrepancias en Contadores de Tokens o Cuotas No Disponibles</h3>
+          <p><strong>Síntoma:</strong> En el plugin <strong>AI Usage Monitor</strong> aparece el mensaje <code>"Cuota de cuenta: no disponible"</code> o la cifra de tokens parece el doble de la real en modelos razonadores (como DeepSeek R1).</p>
+          <p><strong>Causa y Solución:</strong> Muchos proveedores gratuitos o locales no exponen un endpoint público de saldo monetario; en ese caso, mostrar <code>"No disponible"</code> es el comportamiento honesto esperado (nunca debe confundirse con la ventana de contexto restante). Si los tokens están inflados, pídele al agente en el chat: <em>"Revisa el cálculo de AI Usage Monitor para no sumar dos veces los tokens de razonamiento cuando ya vienen incluidos dentro de los tokens de salida"</em>.</p>
+        </div>
+
+        <div class="card card-danger">
+          <h3>9.5. Fallo de Conexión o Tiempo de Espera Agotado en Servidores MCP</h3>
+          <p><strong>Síntoma:</strong> Al ejecutar el Prompt 08 de investigación con <strong>DeepWiki MCP</strong>, el agente indica que las herramientas no responden o hay error de red.</p>
+          <p><strong>Causa y Solución:</strong></p>
+          <ol>
+            <li>Verifica tu conexión a Internet.</li>
+            <li>Comprueba que ejecutaste primero el <strong>Prompt 11</strong> configurando exactamente el endpoint <code>https://mcp.deepwiki.com/mcp</code> con transporte <strong>Streamable HTTP</strong>.</li>
+            <li>Reinicia DeepSeek Harness si el Plugin Manager solicitó recargar la sesión tras registrar el bundle MCP.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(5)">⬅ Anterior: 33 Preguntas (Q&amp;A)</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(7)">Próxima: RESUMEN ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 7: RESUMEN                                                  -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-7" data-t="RESUMEN">
+      <h2 class="section-title">📌 7. RESUMEN EJECUTIVO POR CAPÍTULOS Y HOJA DE RUTA</h2>
+
+      <div class="card card-highlight">
+        <span class="pedagogy-pill">Síntesis de Repaso Rápido</span>
+        <p>Utiliza este resumen estructurado por módulos para repasar las ideas clave antes de construir tus propios plugins o imprimir este manual en formato PDF:</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Módulos 0 y 1: Entorno y Fundamentos</h3>
+          <ul>
+            <li><strong>DeepSeek Harness</strong> es una aplicación nativa para macOS y Windows con arquitectura desbloqueada.</li>
+            <li>El <strong>Modo CREADOR (Creator Mode)</strong> se activa en la barra superior junto al selector de modelos.</li>
+            <li>Para crear una herramienta se pulsa <code>More (+) → Crear un plugin</code> y se antepone siempre el prefijo en inglés: <code>Create a DSH plugin with a left sidebar entry.</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Módulo 2: Proveedores e IA 100% Gratis</h3>
+          <ul>
+            <li>Puedes conectar la API oficial de DeepSeek, tu cuenta de ChatGPT o una clave gratuita de <strong>OpenRouter</strong>.</li>
+            <li>En OpenRouter, al buscar la palabra <code>free</code> en el selector de modelos de Harness, accedes a modelos sin coste.</li>
+            <li>Se recomienda fijar el nivel de esfuerzo en <strong>Medio</strong> o <strong>Alto</strong> para compilar plugins complejos sin fallos.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Módulos 3 y 4: Productividad y Multimedia</h3>
+          <ul>
+            <li><strong>Task Celebration HUD:</strong> Cronómetro `MM:SS` en `shell.overlay` con confeti real al cumplirse `reason.kind === "completed"`.</li>
+            <li><strong>AI Usage Monitor:</strong> Control real de `tokenUsage`, `contextPressure`, `contextWindow` y costes USD.</li>
+            <li><strong>Mi Espacio &amp; Mission Control:</strong> Gestión Kanban bidireccional por chat y supervisión multisesión.</li>
+            <li><strong>Estudio Creativo &amp; MiniCut:</strong> Miniaturas YouTube 16:9 exportadas en PNG ($1280 \times 720$) y edición de vídeo MP4 con FFmpeg.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Módulos 5, 6 y 7: 3D, MCP y Marca Blanca</h3>
+          <ul>
+            <li><strong>Experiencias 3D:</strong> Laboratorio didáctico de tokens/vectores, videojuego <em>Escape AI</em> (WASD + llave + colisiones) y globo <em>Earth Live</em> conectado a USGS y NASA EONET.</li>
+            <li><strong>Protocolo MCP:</strong> Conexión a <code>https://mcp.deepwiki.com/mcp</code> por Streamable HTTP para auditar el repositorio <code>deepseek-ai/deepseek-harness</code>.</li>
+            <li><strong>Personalización:</strong> Estética noventera con <em>Retro AI OS</em> y rebranding completo de nombre e icono tras reiniciar la aplicación.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(6)">⬅ Anterior: ERRORES</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(8)">Próxima: FUENTES ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 8: FUENTES (CON BOTONES "ABRIR ENLACE EN NUEVA VENTANA")    -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-8" data-t="FUENTES">
+      <h2 class="section-title">🔗 8. FUENTES FIABLES, DOCUMENTACIÓN OFICIAL Y DIRECTORIO DE URLS</h2>
+
+      <div class="card card-highlight">
+        <p>Todas las direcciones URL, endpoints de APIs en tiempo real, servidores MCP y referencias técnicas documentadas en este manual disponen a continuación de su texto íntegro para copiar y de su botón dedicado <strong>"Abrir enlace en nueva ventana"</strong>.</p>
+      </div>
+
+      <!-- URL 1: YOUTUBE -->
+      <div class="card">
+        <h3>1. Vídeo Tutorial Oficial en YouTube (Referencia Principal)</h3>
+        <p><strong>Título:</strong> <em>DeepSeek acaba de lanzar su Modo CREADOR: Crea tu Harness GRATIS 💣</em> · <strong>Autor / Canal:</strong> Alejavi Rivera (Vídeo #335).</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-1">https://youtube.com/watch?v=_fgcYcSA7oo&amp;is=UBbW0vDri8Jturvm</div>
+          <div class="url-actions-row">
+            <a href="https://youtube.com/watch?v=_fgcYcSA7oo&is=UBbW0vDri8Jturvm" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-1">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL 2: DEEPWIKI MCP -->
+      <div class="card">
+        <h3>2. Servidor MCP de Documentación Técnica (DeepWiki MCP Endpoint)</h3>
+        <p><strong>Transporte:</strong> Streamable HTTP (sin autenticación para repositorios públicos) · <strong>Uso:</strong> Empleado en los Prompts 11 y 08 para consultar repositorios en vivo.</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-2">https://mcp.deepwiki.com/mcp</div>
+          <div class="url-actions-row">
+            <a href="https://mcp.deepwiki.com/mcp" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-2">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL 3: USGS GEOJSON -->
+      <div class="card">
+        <h3>3. API Oficial de Terremotos en Tiempo Real (USGS Feed GeoJSON - Últimas 24h)</h3>
+        <p><strong>Entidad:</strong> Servicio Geológico de los Estados Unidos (USGS) · <strong>Uso:</strong> Alimenta la capa sísmica del globo terráqueo 3D en el plugin <strong>Earth Live</strong> (Prompt 12).</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-3">https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson</div>
+          <div class="url-actions-row">
+            <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-3">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL 4: NASA EONET -->
+      <div class="card">
+        <h3>4. API Oficial de Eventos Naturales Activos (NASA EONET v3)</h3>
+        <p><strong>Entidad:</strong> NASA Earth Observatory Natural Event Tracker (EONET) · <strong>Uso:</strong> Alimenta en tiempo real los incendios forestales, tormentas y volcanes activos en el plugin <strong>Earth Live</strong> (Prompt 12).</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-4">https://eonet.gsfc.nasa.gov/api/v3/events?status=open</div>
+          <div class="url-actions-row">
+            <a href="https://eonet.gsfc.nasa.gov/api/v3/events?status=open" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-4">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL 5: REPOSITORIO GITHUB DEEPSEEK HARNESS -->
+      <div class="card">
+        <h3>5. Repositorio Técnico Oficial de Referencia en GitHub</h3>
+        <p><strong>Identificador de repositorio:</strong> <code>deepseek-ai/deepseek-harness</code> · <strong>Uso:</strong> Repositorio consultado mediante DeepWiki MCP para verificar las especificaciones de Cordis, Plugin Manager, eventos de sesión y <code>shell.overlay</code>.</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-5">https://github.com/deepseek-ai/deepseek-harness</div>
+          <div class="url-actions-row">
+            <a href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-5">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL 6: OPENROUTER -->
+      <div class="card">
+        <h3>6. Plataforma Agregadora OpenRouter (Claves API para Modelos Gratuitos <code>free</code>)</h3>
+        <p><strong>Uso:</strong> Gestión de claves API (<code>sk-or-v1-...</code>) para conectar modelos gratuitos dentro del menú <em>Ajustes &gt; Modelos</em> de DeepSeek Harness.</p>
+        <div class="url-item-box">
+          <div class="url-code-text" id="url-6">https://openrouter.ai/keys</div>
+          <div class="url-actions-row">
+            <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="open-url-btn">↗ Abrir enlace en nueva ventana</a>
+            <button type="button" class="copy-btn" data-copy-target="url-6">COPIAR URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFERENCIA DOCUMENTAL PDF -->
+      <div class="card">
+        <h3>7. Guía Documental en Formato PDF</h3>
+        <p style="margin-bottom:0;"><strong>Título:</strong> <em>Prompts-Creator-by-Alejavi.pdf (Recurso Gratuito 2026)</em> · <strong>Autor:</strong> Alejavi Rivera · <strong>Contenido:</strong> Compendio técnico de los 12 prompts oficializados para DeepSeek Harness Creator Mode (páginas 04 a 15).</p>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(7)">⬅ Anterior: RESUMEN</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(9)">Próxima: CRÉDITOS ➔</button>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- PESTAÑA 9: CRÉDITOS (ORDEN OBLIGATORIO ESTRICTO)                    -->
+    <!-- =================================================================== -->
+    <section class="tab-section" id="sec-9" data-t="CRÉDITOS">
+      <!-- 1. Título de la sección -->
+      <h2 class="section-title">🏆 CRÉDITOS DEL TUTORIAL</h2>
+
+      <!-- 2. SVG animado compartido con INICIO (visible en primera pantalla móvil) -->
+      <div class="svg-hero-wrapper" role="img" aria-label="Ilustración vectorial animada compartida del Modo Creador de DeepSeek Harness: núcleo Cordis, globo 3D Earth Live, paneles Kanban y conector MCP.">
+        <div id="svg-mount-credits" class="svg-hero-mount"></div>
+      </div>
+
+      <!-- 3. Breve descripción de la ilustración -->
+      <div class="card">
+        <p style="margin-bottom:0; text-align:center;"><strong>Descripción de la ilustración animada:</strong> Representación vectorial multicapa en proporción 4:5 del ecosistema <strong>DeepSeek Harness Creator Mode</strong>. En el centro late el motor de plugins <em>Cordis</em> conectado mediante haces de datos dinámicos a cuatro módulos reales del tutorial: el tablero Kanban y editor 16:9 (arriba izquierda), el cronómetro <em>Task Celebration HUD</em> y monitor de tokens (arriba derecha), el editor de vídeo <em>MiniCut</em> junto al conector <em>DeepWiki MCP</em> (abajo izquierda) y el globo terráqueo interactivo <em>Earth Live 3D</em> con radar sísmico y climático en tiempo real (abajo derecha), presididos por el prefijo universal en inglés.</p>
+      </div>
+
+      <!-- 4. Nombre del autor (elemento visual más destacado) y 5. Texto «Autor del tutorial» -->
+      <div class="credits-author-box">
+        <div class="credits-author-name">Rubén Sbarsky</div>
+        <div class="credits-author-role">Autor del tutorial</div>
+      </div>
+
+      <!-- 6. Información adicional pertinente y Fecha/Hora sincronizada fija -->
+      <div class="card card-highlight">
+        <h3>Información Técnica de Edición y Sincronización</h3>
+        <ul>
+          <li><strong>Título de la obra:</strong> Manual Maestro y Tutorial Interactivo: El Modo Creador de DeepSeek Harness.</li>
+          <li><strong>Fecha y hora de creación (fija):</strong> <code>08/11/2026 — 23:50:44</code></li>
+          <li><strong>Arquitectura de código:</strong> Archivo único HTML5 autónomo (Single-File SPA) diseñado bajo estándares <em>Clean Code (v2.0)</em> y metodología de auditoría adversarial <em>Gauntlet V3</em>, sin dependencias externas ni CDN.</li>
+          <li><strong>Optimización de dispositivo:</strong> Interfaz adaptable mobile-first calibrada para pantallas de 360 px de ancho (Samsung Galaxy A02s) y ordenadores de escritorio.</li>
+          <li><strong>Material fuente base:</strong> Guía técnica <em>El Modo Creador de DeepSeek Harness</em>, vídeo #335 y colección de 12 prompts de Alejavi Rivera.</li>
+        </ul>
+      </div>
+
+      <!-- 7. Número de versión coincidente con el nombre del archivo -->
+      <div class="card card-success" style="text-align:center;">
+        <h3 style="margin-top:0;">Número de Versión del Entregable</h3>
+        <p style="font-size:1.25rem; font-weight:800; color:var(--accent); margin-bottom:4px;">Versión: V001</p>
+        <p style="margin-bottom:0; font-family:monospace; font-size:0.88rem;">Archivo: tutorial_modo_creador_deepseek_V001.html</p>
+      </div>
+
+      <div class="tab-footer-nav">
+        <button type="button" class="step-nav-btn" onclick="go(8)">⬅ Anterior: FUENTES</button>
+        <button type="button" class="step-nav-btn next-btn" onclick="go(0)">Volver al comienzo: INICIO 🏠</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MOTOR JAVASCRIPT LIMPIO (CLEAN CODE - NOMBRES REVELADORES DE INTENCIÓN)-->
+  <!-- ===================================================================== -->
+  <script>
+    (function initializeTutorialApplication() {
+      'use strict';
+
+      const STORAGE_KEYS = {
+        THEME: 'dsh_tutorial_theme_v001',
+        FONT_SCALE: 'dsh_tutorial_font_scale_v001',
+        ACTIVE_TAB: 'dsh_tutorial_active_tab_v001',
+        CHECKLIST: 'dsh_tutorial_checklist_v001'
+      };
+
+      const secs = Array.from(document.querySelectorAll('.tab-section'));
+      const navChips = Array.from(document.querySelectorAll('#main-nav .chip[data-tab-index]'));
+      const dr = document.querySelector('#dr');
+      const mb = document.querySelector('#mb');
+      const homeIndexBtn = document.querySelector('#ix');
+
+      let currentTabIndex = 0;
+      let isSvgAnimationPaused = false;
+      let masterSvgMarkup = '';
+
+      /* -------------------------------------------------------------------
+         1. GESTIÓN SEGURA DE LOCALSTORAGE
+      ------------------------------------------------------------------- */
+      function readStorageValue(key, fallbackValue) {
+        try {
+          const stored = window.localStorage.getItem(key);
+          return stored !== null ? stored : fallbackValue;
+        } catch (storageError) {
+          return fallbackValue;
+        }
+      }
+
+      function writeStorageValue(key, value) {
+        try {
+          window.localStorage.setItem(key, String(value));
+        } catch (storageError) {
+          /* Continúa funcionando sin interrumpir la experiencia si el navegador restringe localStorage */
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         2. EXTRACCIÓN DE PLANTILLA ÚNICA SVG Y MONTAJE CON IDs ÚNICOS
+      ------------------------------------------------------------------- */
+      function extractMasterSvgTemplate() {
+        const masterContainer = document.getElementById('svg-master-source');
+        if (!masterContainer) return;
+        masterSvgMarkup = masterContainer.innerHTML.trim();
+        masterContainer.remove();
+      }
+
+      function buildUniqueSvgInstanceMarkup(instanceSuffix) {
+        if (!masterSvgMarkup) return '';
+        return masterSvgMarkup.replace(/__UID__/g, '_' + instanceSuffix);
+      }
+
+      function activateFallbackDataUriIfNeeded(mountNode, instanceSuffix) {
+        if (!mountNode) return;
+        const svgElement = mountNode.querySelector('svg');
+        if (svgElement && svgElement.getBoundingClientRect().width > 0) return;
+
+        const rawSvg = buildUniqueSvgInstanceMarkup(instanceSuffix);
+        if (!rawSvg) return;
+        const encodedSvg = 'data:image/svg+xml;utf8,' + encodeURIComponent(rawSvg);
+        mountNode.innerHTML = '<img src="' + encodedSvg + '" alt="Ilustración del Modo Creador de DeepSeek Harness" style="width:100%;height:100%;object-fit:contain;" />';
+      }
+
+      function mountSvgInstance(containerId, instanceSuffix) {
+        const mountNode = document.getElementById(containerId);
+        if (!mountNode || !masterSvgMarkup) return;
+
+        mountNode.innerHTML = buildUniqueSvgInstanceMarkup(instanceSuffix);
+        mountNode.classList.toggle('svg-paused', isSvgAnimationPaused);
+
+        window.requestAnimationFrame(function verifySvgMount() {
+          if (!mountNode.querySelector('svg')) {
+            activateFallbackDataUriIfNeeded(mountNode, instanceSuffix);
+          }
+        });
+      }
+
+      function ensureVisibleSvgContainersAreMounted() {
+        if (currentTabIndex === 0) {
+          const homeMount = document.getElementById('svg-mount-home');
+          if (homeMount && homeMount.children.length === 0) {
+            mountSvgInstance('svg-mount-home', 'home');
+          }
+        }
+        if (currentTabIndex === 9) {
+          const creditsMount = document.getElementById('svg-mount-credits');
+          if (creditsMount && creditsMount.children.length === 0) {
+            mountSvgInstance('svg-mount-credits', 'credits');
+          }
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         3. ÍNDICE LATERAL DESPLEGABLE (#dr y #mb) Y NAVEGACIÓN SPA go(i)
+      ------------------------------------------------------------------- */
+      const tg = function toggleIndexDrawer(forceState) {
+        if (!dr || !mb) return;
+        dr.classList.toggle('o', forceState);
+        mb.setAttribute('aria-expanded', String(dr.classList.contains('o')));
+      };
+
+      function go(targetIndex) {
+        const validIndex = Math.max(0, Math.min(secs.length - 1, Number(targetIndex) || 0));
+        currentTabIndex = validIndex;
+
+        secs.forEach(function updateSectionVisibility(section, idx) {
+          section.classList.toggle('active', idx === validIndex);
+        });
+
+        navChips.forEach(function updateNavChipState(chip) {
+          const chipIndex = Number(chip.getAttribute('data-tab-index'));
+          const isCurrent = chipIndex === validIndex;
+          chip.classList.toggle('active', isCurrent);
+          if (isCurrent) {
+            chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+
+        if (dr) {
+          Array.from(dr.children).forEach(function updateDrawerHighlight(linkItem, idx) {
+            linkItem.classList.toggle('on', idx === validIndex);
+          });
+        }
+
+        if (validIndex === 0) {
+          mountSvgInstance('svg-mount-home', 'home');
+        } else if (validIndex === 9) {
+          mountSvgInstance('svg-mount-credits', 'credits');
+        }
+
+        writeStorageValue(STORAGE_KEYS.ACTIVE_TAB, validIndex);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        updateReadingProgressBar();
+      }
+
+      window.go = go;
+
+      function buildIndexDrawerEntries() {
+        if (!dr) return;
+        dr.innerHTML = '';
+        secs.forEach(function createDrawerLink(section, idx) {
+          const link = document.createElement('a');
+          const titleText = section.dataset.t || (section.querySelector('h2') ? section.querySelector('h2').textContent : 'Sección');
+          link.textContent = (idx ? idx + '. ' : '') + titleText;
+          link.setAttribute('tabindex', '0');
+          link.onclick = function handleDrawerItemClick() {
+            go(idx);
+            tg(false);
+          };
+          link.onkeydown = function handleDrawerKeydown(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              go(idx);
+              tg(false);
+            }
+          };
+          dr.appendChild(link);
+        });
+      }
+
+      function bindNavigationEvents() {
+        navChips.forEach(function attachChipClick(chip) {
+          chip.addEventListener('click', function onChipClick() {
+            const index = Number(chip.getAttribute('data-tab-index'));
+            go(index);
+            tg(false);
+          });
+        });
+
+        if (mb) {
+          mb.onclick = function onMenuButtonClick() {
+            tg();
+          };
+        }
+
+        if (homeIndexBtn) {
+          homeIndexBtn.onclick = function onHomeIndexClick() {
+            tg(true);
+          };
+        }
+
+        window.addEventListener('keydown', function onGlobalKeyDown(event) {
+          if (event.key === 'Escape') {
+            tg(false);
+          }
+          if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            return;
+          }
+          if (event.key === 'ArrowRight' && event.altKey) {
+            event.preventDefault();
+            if (currentTabIndex < secs.length - 1) go(currentTabIndex + 1);
+          } else if (event.key === 'ArrowLeft' && event.altKey) {
+            event.preventDefault();
+            if (currentTabIndex > 0) go(currentTabIndex - 1);
+          }
+        });
+
+        document.addEventListener('click', function onOutsideDrawerClick(event) {
+          if (!event.target.closest('#dr,#mb,#ix')) {
+            tg(false);
+          }
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         4. BOTONES FLOTANTES ARRASTRABLES (MOVIBLES) PARA INICIO Y ARRIBA
+      ------------------------------------------------------------------- */
+      function makeFloatingButtonDraggable(buttonElement, onClickAction) {
+        if (!buttonElement) return;
+
+        let isDragging = false;
+        let hasMoved = false;
+        let startX = 0;
+        let startY = 0;
+        let initialLeft = 0;
+        let initialTop = 0;
+
+        function onPointerDown(event) {
+          isDragging = true;
+          hasMoved = false;
+          const rect = buttonElement.getBoundingClientRect();
+          initialLeft = rect.left;
+          initialTop = rect.top;
+          startX = event.clientX;
+          startY = event.clientY;
+          buttonElement.setPointerCapture(event.pointerId);
+        }
+
+        function onPointerMove(event) {
+          if (!isDragging) return;
+          const deltaX = event.clientX - startX;
+          const deltaY = event.clientY - startY;
+
+          if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+            hasMoved = true;
+          }
+
+          if (hasMoved) {
+            const maxLeft = window.innerWidth - buttonElement.offsetWidth - 6;
+            const maxTop = window.innerHeight - buttonElement.offsetHeight - 6;
+            const clampedLeft = Math.max(6, Math.min(maxLeft, initialLeft + deltaX));
+            const clampedTop = Math.max(62, Math.min(maxTop, initialTop + deltaY));
+
+            buttonElement.style.left = clampedLeft + 'px';
+            buttonElement.style.top = clampedTop + 'px';
+            buttonElement.style.right = 'auto';
+            buttonElement.style.bottom = 'auto';
+          }
+        }
+
+        function onPointerUp(event) {
+          if (!isDragging) return;
+          isDragging = false;
+          buttonElement.releasePointerCapture(event.pointerId);
+          if (!hasMoved) {
+            onClickAction();
+          }
+        }
+
+        buttonElement.addEventListener('pointerdown', onPointerDown);
+        buttonElement.addEventListener('pointermove', onPointerMove);
+        buttonElement.addEventListener('pointerup', onPointerUp);
+      }
+
+      function setupFloatingButtons() {
+        const floatHomeBtn = document.getElementById('float-home-btn');
+        const floatTopBtn = document.getElementById('float-top-btn');
+
+        makeFloatingButtonDraggable(floatHomeBtn, function navigateToHomeTab() {
+          go(0);
+        });
+
+        makeFloatingButtonDraggable(floatTopBtn, function scrollToTopOfCurrentTab() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         5. BOTONES COPIAR CON CONFIRMACIÓN Y ALTERNATIVA DE SELECCIÓN
+      ------------------------------------------------------------------- */
+      function copyTextWithFallback(textToCopy, triggerButton) {
+        const originalText = triggerButton.getAttribute('data-orig-label') || triggerButton.textContent;
+        triggerButton.setAttribute('data-orig-label', originalText);
+
+        function showSuccessFeedback() {
+          triggerButton.textContent = '✓ ¡COPIADO!';
+          triggerButton.classList.add('copied');
+          window.setTimeout(function restoreLabel() {
+            triggerButton.textContent = originalText;
+            triggerButton.classList.remove('copied');
+          }, 2000);
+        }
+
+        function executeManualFallback() {
+          const tempArea = document.createElement('textarea');
+          tempArea.value = textToCopy;
+          tempArea.style.position = 'fixed';
+          tempArea.style.top = '10px';
+          tempArea.style.left = '10px';
+          tempArea.style.opacity = '0';
+          document.body.appendChild(tempArea);
+          tempArea.focus();
+          tempArea.select();
+          try {
+            const copied = document.execCommand('copy');
+            if (copied) {
+              showSuccessFeedback();
+            } else {
+              window.prompt('Copia manualmente el texto seleccionado (Ctrl+C):', textToCopy);
+            }
+          } catch (err) {
+            window.prompt('Copia manualmente el texto seleccionado (Ctrl+C):', textToCopy);
+          } finally {
+            document.body.removeChild(tempArea);
+          }
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(textToCopy).then(showSuccessFeedback).catch(executeManualFallback);
+        } else {
+          executeManualFallback();
+        }
+      }
+
+      function bindCopyButtons() {
+        const copyButtons = document.querySelectorAll('.copy-btn[data-copy-target]');
+        copyButtons.forEach(function attachCopyListener(button) {
+          button.addEventListener('click', function onCopyClick() {
+            const targetId = button.getAttribute('data-copy-target');
+            const targetElement = document.getElementById(targetId);
+            if (!targetElement) return;
+            copyTextWithFallback(targetElement.textContent, button);
+          });
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         6. BUSCADOR INTERNO MULTIPESTAÑA
+      ------------------------------------------------------------------- */
+      function setupGlobalSearch() {
+        const searchInput = document.getElementById('global-search-input');
+        const clearBtn = document.getElementById('search-clear-btn');
+        const resultsBanner = document.getElementById('search-results-banner');
+        if (!searchInput || !resultsBanner) return;
+
+        function performSearch() {
+          const query = searchInput.value.trim().toLowerCase();
+          clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+
+          if (query.length < 2) {
+            resultsBanner.style.display = 'none';
+            resultsBanner.innerHTML = '';
+            return;
+          }
+
+          const matches = [];
+          secs.forEach(function scanSection(section, idx) {
+            const text = section.textContent.toLowerCase();
+            if (text.includes(query)) {
+              const title = section.dataset.t || 'Sección ' + idx;
+              matches.push({ index: idx, title: title });
+            }
+          });
+
+          resultsBanner.style.display = 'block';
+          if (matches.length === 0) {
+            resultsBanner.innerHTML = '<strong>Sin resultados para:</strong> "' + query.replace(/[<>&"]/g, '') + '". Prueba con otra palabra (ej. OpenRouter, FFmpeg, Cordis, MCP, Kanban).';
+            return;
+          }
+
+          let html = '<strong>Resultados encontrados en ' + matches.length + ' pestaña(s):</strong><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">';
+          matches.forEach(function buildMatchButton(match) {
+            html += '<button type="button" class="chip" onclick="go(' + match.index + ')">Ir a ' + match.title + '</button>';
+          });
+          html += '</div>';
+          resultsBanner.innerHTML = html;
+        }
+
+        searchInput.addEventListener('input', performSearch);
+        clearBtn.addEventListener('click', function clearSearch() {
+          searchInput.value = '';
+          performSearch();
+          searchInput.focus();
+        });
+      }
+
+      /* -------------------------------------------------------------------
+         7. FILTROS DE LAS 33 PREGUNTAS (NIVEL 1, 2, 3)
+      ------------------------------------------------------------------- */
+      function setupQuestionsFilter() {
+        const filterButtons = document.querySelectorAll('.filter-pill[data-qa-filter]');
+        const levelBlocks = document.querySelectorAll('.qa-level-block');
+        const expandAllBtn = document.getElementById('qa-expand-all-btn');
+        let allExpanded = true;
+
+        filterButtons.forEach(function attachFilter(btn) {
+          btn.addEventListener('click', function onFilterClick() {
+            const selectedLevel = btn.getAttribute('data-qa-filter');
+            filterButtons.forEach(function toggleActive(b) {
+              b.classList.toggle('active', b === btn);
+            });
+            levelBlocks.forEach(function filterBlock(block) {
+              const blockLevel = block.getAttribute('data-level');
+              block.style.display = (selectedLevel === 'all' || selectedLevel === blockLevel) ? 'block' : 'none';
+            });
+          });
+        });
+
+        if (expandAllBtn) {
+          expandAllBtn.addEventListener('click', function onToggleAllQa() {
+            allExpanded = !allExpanded;
+            document.querySelectorAll('.qa-item').forEach(function updateDetails(detail) {
+              detail.open = allExpanded;
+            });
+          });
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         8. PREFERENCIAS: TAMAÑO DE LETRA, TEMA OSCURO/CLARO Y CHECKLIST
+      ------------------------------------------------------------------- */
+      function setupPreferencesAndChecklist() {
+        const savedTheme = readStorageValue(STORAGE_KEYS.THEME, 'dark');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        let currentScale = parseFloat(readStorageValue(STORAGE_KEYS.FONT_SCALE, '1')) || 1;
+        document.documentElement.style.setProperty('--font-scale', String(currentScale));
+
+        const fontDecBtn = document.getElementById('font-dec-btn');
+        const fontIncBtn = document.getElementById('font-inc-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+
+        if (fontDecBtn) {
+          fontDecBtn.addEventListener('click', function decreaseFont() {
+            currentScale = Math.max(0.85, Math.round((currentScale - 0.08) * 100) / 100);
+            document.documentElement.style.setProperty('--font-scale', String(currentScale));
+            writeStorageValue(STORAGE_KEYS.FONT_SCALE, currentScale);
+          });
+        }
+
+        if (fontIncBtn) {
+          fontIncBtn.addEventListener('click', function increaseFont() {
+            currentScale = Math.min(1.3, Math.round((currentScale + 0.08) * 100) / 100);
+            document.documentElement.style.setProperty('--font-scale', String(currentScale));
+            writeStorageValue(STORAGE_KEYS.FONT_SCALE, currentScale);
+          });
+        }
+
+        if (themeToggleBtn) {
+          themeToggleBtn.addEventListener('click', function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', current);
+            writeStorageValue(STORAGE_KEYS.THEME, current);
+          });
+        }
+
+        /* Pausar / Reanudar SVG */
+        const toggleSvgBtn = document.getElementById('toggle-svg-anim-home');
+        if (toggleSvgBtn) {
+          toggleSvgBtn.addEventListener('click', function onToggleSvgAnim() {
+            isSvgAnimationPaused = !isSvgAnimationPaused;
+            document.querySelectorAll('.svg-hero-mount').forEach(function applyPauseState(node) {
+              node.classList.toggle('svg-paused', isSvgAnimationPaused);
+            });
+          });
+        }
+
+        /* Checklist persistente */
+        let checklistState = {};
+        try {
+          checklistState = JSON.parse(readStorageValue(STORAGE_KEYS.CHECKLIST, '{}')) || {};
+        } catch (err) {
+          checklistState = {};
+        }
+
+        const checkboxes = document.querySelectorAll('#interactive-checklist input[type="checkbox"]');
+        checkboxes.forEach(function bindCheckbox(box) {
+          const checkId = box.getAttribute('data-check-id');
+          box.checked = Boolean(checklistState[checkId]);
+          box.closest('.checklist-item').classList.toggle('checked', box.checked);
+
+          box.addEventListener('change', function onCheckChange() {
+            checklistState[checkId] = box.checked;
+            box.closest('.checklist-item').classList.toggle('checked', box.checked);
+            writeStorageValue(STORAGE_KEYS.CHECKLIST, JSON.stringify(checklistState));
+          });
+        });
+
+        const resetCheckBtn = document.getElementById('reset-checklist-btn');
+        if (resetCheckBtn) {
+          resetCheckBtn.addEventListener('click', function onResetCheck() {
+            checklistState = {};
+            writeStorageValue(STORAGE_KEYS.CHECKLIST, '{}');
+            checkboxes.forEach(function uncheck(box) {
+              box.checked = false;
+              box.closest('.checklist-item').classList.remove('checked');
+            });
+          });
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         9. IMPRESIÓN Y GENERACIÓN DE PDF A4 CON RESTAURACIÓN DE ESTADO
+      ------------------------------------------------------------------- */
+      function setupPrintAndPdfPreparation() {
+        const printBtn = document.getElementById('print-pdf-btn');
+        let closedDetailsMemory = [];
+
+        function prepareDocumentBeforePrint() {
+          mountSvgInstance('svg-mount-home', 'home');
+          mountSvgInstance('svg-mount-credits', 'credits');
+
+          closedDetailsMemory = [];
+          document.querySelectorAll('details.collapsible-card').forEach(function openDetailForPrint(detail) {
+            if (!detail.open) {
+              closedDetailsMemory.push(detail);
+              detail.open = true;
+            }
+          });
+        }
+
+        function restoreDocumentAfterPrint() {
+          closedDetailsMemory.forEach(function closePreviouslyClosedDetail(detail) {
+            detail.open = false;
+          });
+          closedDetailsMemory = [];
+        }
+
+        window.addEventListener('beforeprint', prepareDocumentBeforePrint);
+        window.addEventListener('afterprint', restoreDocumentAfterPrint);
+
+        if (printBtn) {
+          printBtn.addEventListener('click', function onPrintButtonClick() {
+            prepareDocumentBeforePrint();
+            try {
+              window.print();
+            } catch (printError) {
+              window.alert('Abre este archivo directamente en el navegador y utiliza Ctrl+P o Cmd+P');
+            } finally {
+              window.setTimeout(restoreDocumentAfterPrint, 600);
+            }
+          });
+        }
+      }
+
+      /* -------------------------------------------------------------------
+         10. BARRA DE PROGRESO DE LECTURA Y CICLO DE REPARACIÓN SVG
+      ------------------------------------------------------------------- */
+      function updateReadingProgressBar() {
+        const progressBar = document.getElementById('reading-progress-bar');
+        if (!progressBar) return;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollPercent = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+        const tabProgress = ((currentTabIndex + 1) / secs.length) * 100;
+        const combinedProgress = Math.max(scrollPercent, tabProgress * 0.35);
+        progressBar.style.width = combinedProgress + '%';
+      }
+
+      /* -------------------------------------------------------------------
+         INICIALIZACIÓN PRINCIPAL
+      ------------------------------------------------------------------- */
+      extractMasterSvgTemplate();
+      buildIndexDrawerEntries();
+      bindNavigationEvents();
+      setupFloatingButtons();
+      bindCopyButtons();
+      setupGlobalSearch();
+      setupQuestionsFilter();
+      setupPreferencesAndChecklist();
+      setupPrintAndPdfPreparation();
+
+      window.addEventListener('scroll', updateReadingProgressBar, { passive: true });
+      window.setInterval(ensureVisibleSvgContainersAreMounted, 2000);
+
+      const savedTab = Number(readStorageValue(STORAGE_KEYS.ACTIVE_TAB, '0'));
+      go(Number.isNaN(savedTab) ? 0 : savedTab);
+    })();
+  </script>
+</body>
+</html>
